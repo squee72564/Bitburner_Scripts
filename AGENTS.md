@@ -15,7 +15,7 @@
 - `pnpm run build:bb`: One-off Bitburner build to `dist/`.
 - `pnpm run typecheck:bb`: Typecheck Bitburner scripts.
 - `pnpm run build:mcp`: Build MCP server to `dist-mcp/`.
-- `pnpm run dev:mcp`: Run MCP server entrypoint in TS.
+- `pnpm run start:mcp`: Run the compiled MCP server (stdio). Build first after changes.
 - `pnpm run typecheck:mcp`: Typecheck MCP server.
 - `pnpm run lint`: Run ESLint across the repo.
 

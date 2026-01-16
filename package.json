@@ -5,7 +5,6 @@
   "main": "dist-mcp/index.js",
   "scripts": {
     "build:mcp": "tsc -p tsconfig.json",
-    "dev:mcp": "ts-node src/index.ts",
     "start:mcp": "node dist-mcp/index.js",
     "typecheck:mcp": "tsc -p tsconfig.json --noEmit",
     "build:bb": "tsc -p tsconfig.bitburner.json",

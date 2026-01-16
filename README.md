@@ -76,14 +76,15 @@ The MCP server is implemented under `src/` and connects to Bitburner’s Remote 
 
 ### MCP Server (Local Run)
 
-Copy the env template, then run the server over stdio:
+Copy the env template, then build and run the server over stdio:
 
 ```
 cp .env.example .env
 ```
 
 ```
-pnpm run dev:mcp
+pnpm run build:mcp
+pnpm run start:mcp
 ```
 
 Required environment variables:
@@ -91,6 +92,8 @@ Required environment variables:
 
 Notes:
 - The MCP server writes logs to stderr to keep stdout clean for MCP protocol messages.
+- Rebuild after source changes (`pnpm run build:mcp`).
+- For Codex, point MCP config to the compiled entrypoint: `node /home/alan/Programming/BitBurner/dist-mcp/index.js`.
 
 ## Documents
 
