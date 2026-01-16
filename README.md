@@ -70,9 +70,27 @@ pnpm run lint
 pnpm run lint:fix
 ```
 
-## MCP Server (Planned)
+## MCP Server
 
-The MCP server implementation will live in `src/`. See the design doc and implementation plan for details.
+The MCP server is implemented under `src/` and connects to Bitburner’s Remote API over WebSocket using MCP stdio transport.
+
+### MCP Server (Local Run)
+
+Copy the env template, then run the server over stdio:
+
+```
+cp .env.example .env
+```
+
+```
+pnpm run dev:mcp
+```
+
+Required environment variables:
+- `BITBURNER_RPC_URL` (e.g., `ws://localhost:12525`)
+
+Notes:
+- The MCP server writes logs to stderr to keep stdout clean for MCP protocol messages.
 
 ## Documents
 

@@ -1,5 +1,7 @@
 # Implementation Plan
 
+Status: Implemented in `src/` and `src/bitburner/`. This document remains as a reference checklist.
+
 You are a senior engineer tasked with implementing the previously written design document.
 
 Based strictly on that design:

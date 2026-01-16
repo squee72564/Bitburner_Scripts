@@ -15,7 +15,7 @@
 - `pnpm run build:bb`: One-off Bitburner build to `dist/`.
 - `pnpm run typecheck:bb`: Typecheck Bitburner scripts.
 - `pnpm run build:mcp`: Build MCP server to `dist-mcp/`.
-- `pnpm run dev:mcp`: Run MCP server entrypoint in TS (once implemented).
+- `pnpm run dev:mcp`: Run MCP server entrypoint in TS.
 - `pnpm run typecheck:mcp`: Typecheck MCP server.
 - `pnpm run lint`: Run ESLint across the repo.
 
@@ -37,6 +37,7 @@
 ## Agent-Specific Instructions
 - Agent-generated scripts should live under `bitburner/agent/` to avoid collisions.
 - Do not edit `dist/` directly; edit `bitburner/` and let the watch pipeline compile/sync.
+ - MCP server logs go to stderr to keep stdout clean for MCP protocol traffic.
 
 ## Local Bitburner API Docs
 - Netscript API docs are mirrored under `docs/bitburner/`.
