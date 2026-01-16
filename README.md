@@ -16,6 +16,7 @@ An MCP (Model Context Protocol) server that wraps the Bitburner Remote API to pr
 - Bitburner build output: `dist/`
 - MCP server build output: `dist-mcp/`
 - Bitburner file sync config: `filesync.json`
+  - Agent-managed scripts: `bitburner/agent/`
 
 ## Bitburner TypeScript Workflow
 
