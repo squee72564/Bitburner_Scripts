@@ -6,11 +6,12 @@
   "scripts": {
     "build:mcp": "tsc -p tsconfig.json",
     "start:mcp": "node dist-mcp/index.js",
+    "start:proxy": "node dist-mcp/proxy/index.js",
     "typecheck:mcp": "tsc -p tsconfig.json --noEmit",
     "build:bb": "tsc -p tsconfig.bitburner.json",
     "watch:bb:transpile": "tsc -p tsconfig.bitburner.json -w --preserveWatchOutput",
     "watch:bb:local": "node build/watch.js",
-    "watch:bb:remote": "bitburner-filesync",
+    "watch:bb:remote": "node build/remote-sync.js",
     "watch:bb:init": "node build/init.js",
     "watch:bb:all": "concurrently -k -n transpile,local,remote \"pnpm run watch:bb:transpile\" \"pnpm run watch:bb:local\" \"pnpm run watch:bb:remote\"",
     "watch:bb": "pnpm run watch:bb:init && pnpm run watch:bb:all",
