@@ -117,7 +117,7 @@ Backoff policy:
 
 ## MCP Tool Definitions and Schemas
 
-Each Remote API method maps 1:1 to an MCP tool with strict JSON schemas.
+MCP tools expose only read-only Remote API methods with strict JSON schemas. Write/delete operations are intentionally not exposed to avoid local repo drift.
 
 ### list_files
 - Backed by: getFileNames
@@ -133,23 +133,6 @@ Each Remote API method maps 1:1 to an MCP tool with strict JSON schemas.
   - server: string (default: "home")
 - Output:
   - string (file contents)
-
-### write_file
-- Backed by: pushFile
-- Input schema:
-  - filename: string (required, non-empty)
-  - content: string (required, size-limited)
-  - server: string (default: "home")
-- Output:
-  - "OK"
-
-### delete_file
-- Backed by: deleteFile
-- Input schema:
-  - filename: string (required, non-empty)
-  - server: string (default: "home")
-- Output:
-  - "OK"
 
 ### get_all_files
 - Backed by: getAllFiles
@@ -177,7 +160,6 @@ Schema requirements:
 - Reject unknown properties.
 - Default server to "home" if omitted.
 - Empty or whitespace-only filename is invalid.
-- write_file enforces content size limit.
 
 ## Error Handling Strategy
 
@@ -216,7 +198,6 @@ All configuration values are validated at startup. Invalid config aborts startup
 
 - Default server parameter to "home" for all tools.
 - Reject empty filenames or whitespace-only strings.
-- Enforce max content size for write_file.
 - Do not expose arbitrary JSON-RPC passthrough.
 - Keep MCP tools restricted to filesystem operations only.
 - Treat Bitburner as untrusted/unreliable; do not assume availability.

@@ -68,7 +68,6 @@ Tricky areas:
 - Define JSON schemas for each MCP tool.
 - Enforce defaults for `server` parameter.
 - Implement validation for non-empty filenames.
-- Enforce size limits for `write_file` content.
 
 Key files/modules:
 - `src/tools/schemas.ts`

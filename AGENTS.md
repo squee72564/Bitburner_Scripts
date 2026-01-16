@@ -44,6 +44,7 @@
 - In Bitburner Remote API, connect to `localhost:PROXY_GAME_PORT` so the proxy can forward requests.
 - Run `pnpm run start:proxy` before `pnpm run watch:bb` so sync can connect.
 - For agent-readable outputs, write results to a file (e.g., `data/last-run.txt`) and use MCP `read_file`.
+- MCP tools are read-only; make changes locally and let sync push them into the game.
 
 ## Local Bitburner API Docs
 - Netscript API docs are mirrored under `docs/bitburner/`.

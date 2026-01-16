@@ -94,6 +94,7 @@ Notes:
 - The MCP server writes logs to stderr to keep stdout clean for MCP protocol messages.
 - Rebuild after source changes (`pnpm run build:mcp`).
 - For Codex, point MCP config to the compiled entrypoint: `node /home/alan/Programming/BitBurner/dist-mcp/index.js`.
+- MCP tools are read-only; file modifications happen via local edits + sync.
 
 ### Remote API Proxy (MCP + watch:bb together)
 
