@@ -13,25 +13,11 @@ export const filenameInputSchema = z
   })
   .strict();
 
-export const writeFileInputSchema = z
-  .object({
-    filename: z.string(),
-    content: z.string(),
-    server: z.string().optional(),
-  })
-  .strict();
-
 export const listFilesOutputSchema = z.object({
   result: z.array(z.string()),
 });
 export const readFileOutputSchema = z.object({
   result: z.string(),
-});
-export const writeFileOutputSchema = z.object({
-  result: z.literal("OK"),
-});
-export const deleteFileOutputSchema = z.object({
-  result: z.literal("OK"),
 });
 export const getAllFilesOutputSchema = z.object({
   result: z.array(

@@ -7,17 +7,14 @@ import { Logger } from "../logger";
 import {
   calculateRamOutputSchema,
   definitionFileOutputSchema,
-  deleteFileOutputSchema,
   emptyInputSchema,
   filenameInputSchema,
   getAllFilesOutputSchema,
   listFilesOutputSchema,
   readFileOutputSchema,
   serverInputSchema,
-  writeFileInputSchema,
-  writeFileOutputSchema,
 } from "./schemas";
-import { assertFilename, assertWriteSize, normalizeServer } from "./validators";
+import { assertFilename, normalizeServer } from "./validators";
 
 function toMcpError(error: unknown): McpError {
   if (error instanceof McpError) return error;
@@ -94,47 +91,6 @@ export function registerTools(
         return toResponse(result);
       } catch (error) {
         logger.warn("read_file failed", { error: (error as Error).message });
-        throw toMcpError(error);
-      }
-    }
-  );
-
-  server.registerTool(
-    "write_file",
-    {
-      description: "Write a file to a Bitburner server",
-      inputSchema: writeFileInputSchema,
-      outputSchema: writeFileOutputSchema,
-    },
-    async (input) => {
-      try {
-        assertFilename(input.filename);
-        assertWriteSize(input.content, config.fileWriteMaxBytes);
-        const serverName = normalizeServer(input.server);
-        const result = await client.pushFile(input.filename, input.content, serverName);
-        return toResponse(result);
-      } catch (error) {
-        logger.warn("write_file failed", { error: (error as Error).message });
-        throw toMcpError(error);
-      }
-    }
-  );
-
-  server.registerTool(
-    "delete_file",
-    {
-      description: "Delete a file from a Bitburner server",
-      inputSchema: filenameInputSchema,
-      outputSchema: deleteFileOutputSchema,
-    },
-    async (input) => {
-      try {
-        assertFilename(input.filename);
-        const serverName = normalizeServer(input.server);
-        const result = await client.deleteFile(input.filename, serverName);
-        return toResponse(result);
-      } catch (error) {
-        logger.warn("delete_file failed", { error: (error as Error).message });
         throw toMcpError(error);
       }
     }
