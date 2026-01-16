@@ -6,16 +6,18 @@
 - `dist/`: Compiled Bitburner scripts pushed into the game (generated).
 - `dist-mcp/`: Compiled MCP server output (generated).
 - `build/`: Local sync helpers used by the Bitburner workflow.
-- `filesync.json`: Bitburner Remote API sync configuration.
+- `build/remote-sync.js`: Remote API sync client used by `watch:bb`.
+- `filesync.json`: Sync file types/output folder for local workflows (port is unused now).
 - `tsconfig.json`: MCP server TS config.
 - `tsconfig.bitburner.json`: Bitburner TS config.
 
 ## Build, Test, and Development Commands
-- `pnpm run watch:bb`: Compile Bitburner scripts and sync `dist/` to the game via Remote API.
+- `pnpm run watch:bb`: Compile Bitburner scripts and sync `dist/` to the game via the proxy.
 - `pnpm run build:bb`: One-off Bitburner build to `dist/`.
 - `pnpm run typecheck:bb`: Typecheck Bitburner scripts.
 - `pnpm run build:mcp`: Build MCP server to `dist-mcp/`.
 - `pnpm run start:mcp`: Run the compiled MCP server (stdio). Build first after changes.
+- `pnpm run start:proxy`: Start the Remote API proxy for multiplexing MCP + filesync.
 - `pnpm run typecheck:mcp`: Typecheck MCP server.
 - `pnpm run lint`: Run ESLint across the repo.
 
@@ -38,6 +40,9 @@
 - Agent-generated scripts should live under `bitburner/agent/` to avoid collisions.
 - Do not edit `dist/` directly; edit `bitburner/` and let the watch pipeline compile/sync.
  - MCP server logs go to stderr to keep stdout clean for MCP protocol traffic.
+- If using the proxy, set `PROXY_GAME_PORT=12526`, `PROXY_CLIENT_PORT=12528`, and `BITBURNER_RPC_URL=ws://localhost:12528`.
+- In Bitburner Remote API, connect to `localhost:PROXY_GAME_PORT` so the proxy can forward requests.
+- Run `pnpm run start:proxy` before `pnpm run watch:bb` so sync can connect.
 
 ## Local Bitburner API Docs
 - Netscript API docs are mirrored under `docs/bitburner/`.
