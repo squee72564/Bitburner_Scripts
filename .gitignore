@@ -66,3 +66,4 @@ package-lock.json
 dist/
 dist-mcp/
 NetscriptDefinitions.d.ts
+.env
