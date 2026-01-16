@@ -44,6 +44,7 @@ function toMcpError(error: unknown): McpError {
 
 function toResponse<T>(result: T) {
   return {
+    structuredContent: { result },
     content: [
       {
         type: "text" as const,

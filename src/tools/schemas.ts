@@ -21,16 +21,30 @@ export const writeFileInputSchema = z
   })
   .strict();
 
-export const listFilesOutputSchema = z.array(z.string());
-export const readFileOutputSchema = z.string();
-export const writeFileOutputSchema = z.literal("OK");
-export const deleteFileOutputSchema = z.literal("OK");
-export const getAllFilesOutputSchema = z.array(
-  z.object({
-    filename: z.string(),
-    content: z.string(),
-  })
-);
-export const calculateRamOutputSchema = z.number();
-export const definitionFileOutputSchema = z.string();
+export const listFilesOutputSchema = z.object({
+  result: z.array(z.string()),
+});
+export const readFileOutputSchema = z.object({
+  result: z.string(),
+});
+export const writeFileOutputSchema = z.object({
+  result: z.literal("OK"),
+});
+export const deleteFileOutputSchema = z.object({
+  result: z.literal("OK"),
+});
+export const getAllFilesOutputSchema = z.object({
+  result: z.array(
+    z.object({
+      filename: z.string(),
+      content: z.string(),
+    })
+  ),
+});
+export const calculateRamOutputSchema = z.object({
+  result: z.number(),
+});
+export const definitionFileOutputSchema = z.object({
+  result: z.string(),
+});
 export const emptyInputSchema = z.object({}).strict();
