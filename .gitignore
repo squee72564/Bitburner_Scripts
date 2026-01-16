@@ -38,8 +38,7 @@ tests/cases/**/*.js.map
 scripts/eslint/built/
 scripts/debug.bat
 scripts/run.bat
-scripts/**/*.js
-scripts/**/*.js.map
+!scripts/refresh-bitburner-docs.js
 coverage/
 internal/
 **/.DS_Store

@@ -17,7 +17,8 @@
     "watch:bb": "pnpm run watch:bb:init && pnpm run watch:bb:all",
     "typecheck:bb": "tsc -p tsconfig.bitburner.json --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "docs:refresh": "node scripts/refresh-bitburner-docs.js"
   },
   "keywords": [],
   "author": "",
