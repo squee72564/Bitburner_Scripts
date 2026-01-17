@@ -7,6 +7,7 @@ export async function main(ns: NS): Promise<void> {
   ns.disableLog("scan");
   const flags = ns.flags([
     ["mode", "rooted"],
+    ["m", "rooted"],
     ["help", false],
     ["h", false],
   ]);
@@ -16,7 +17,7 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
 
-  const mode = parseMode(String(flags.mode));
+  const mode = parseMode(String(flags.mode)) || parseMode(String(flags.m));
   if (!mode) {
     ns.tprint(`WARN invalid --mode=${String(flags.mode)}`);
     printHelp(ns);
