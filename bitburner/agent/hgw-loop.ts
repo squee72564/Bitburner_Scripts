@@ -1,4 +1,4 @@
-import { NS } from "@ns";
+import { NS } from '@ns';
 
 interface LoopOptions {
   target: string;
@@ -24,18 +24,18 @@ function capThreads(needed: number, budget: number): number {
 
 function parseOptions(ns: NS): LoopOptions | null {
   const flags = ns.flags([
-    ["money", 0.9],
-    ["hack", 0.1],
-    ["epsilon", 1],
-    ["help", false],
+    ['money', 0.9],
+    ['hack', 0.1],
+    ['epsilon', 1],
+    ['help', false],
   ]);
 
   if (flags.help) {
-    ns.tprint("Usage: run hgw-loop.js [target] [--money 0.9] [--hack 0.1] [--epsilon 1]");
+    ns.tprint('Usage: run hgw-loop.js [target] [--money 0.9] [--hack 0.1] [--epsilon 1]');
     return null;
   }
 
-  const target = (flags._[0] as string) || "n00dles";
+  const target = (flags._ as string[])[0] || 'n00dles';
   const moneyThreshold = Math.min(1, Math.max(0, Number(flags.money)));
   const hackFraction = Math.min(1, Math.max(0, Number(flags.hack)));
   const securityEpsilon = Math.max(0, Number(flags.epsilon));

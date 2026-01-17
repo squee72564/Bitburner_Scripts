@@ -1,10 +1,10 @@
-import type React from "react";
+import type React from 'react';
 
 declare global {
   namespace JSX {
-    interface Element extends React.ReactElement<any, any> {}
+    type Element = React.ReactElement<unknown, unknown>;
     interface IntrinsicElements {
-      [elemName: string]: any;
+      [elemName: string]: unknown;
     }
   }
 }
