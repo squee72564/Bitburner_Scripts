@@ -1,6 +1,4 @@
 import { NS } from "@ns";
-import { isHome } from "lib/host";
-
 export type DfsOptions = {
   shouldAct?: (ns: NS, host: string) => boolean;
   onVisit?: (ns: NS, host: string) => void;
@@ -31,7 +29,7 @@ export class ServerDfs {
     }
     this.visited.add(host);
 
-    if (!isHome(host) && (!this.shouldAct || this.shouldAct(this.ns, host))) {
+    if (!this.shouldAct || this.shouldAct(this.ns, host)) {
       this.onVisit?.(this.ns, host);
     }
 

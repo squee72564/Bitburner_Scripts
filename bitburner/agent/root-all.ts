@@ -1,5 +1,6 @@
 import { NS } from "@ns";
 import { ServerDfs } from "lib/dfs";
+import { isHome } from "lib/host";
 
 const PORT_OPENERS: Array<{
   file: string;
@@ -18,7 +19,7 @@ export async function main(ns: NS): Promise<void> {
 
   const dfs = new ServerDfs(ns, {
     shouldAct: (_ns: NS, host: string) => {
-      if (ns.hasRootAccess(host)) {
+      if (ns.hasRootAccess(host) || isHome(host)) {
         return false;
       }
       const requiredPorts = ns.getServerNumPortsRequired(host);

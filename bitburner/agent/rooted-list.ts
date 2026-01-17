@@ -1,5 +1,6 @@
 import { NS } from "@ns";
 import { ServerDfs } from "lib/dfs";
+import { isHome } from "lib/host";
 
 type Mode = "rooted" | "hackable" | "not-hackable";
 
@@ -26,6 +27,7 @@ export async function main(ns: NS): Promise<void> {
 
   const playerHack = ns.getHackingLevel();
   const dfs = new ServerDfs(ns, {
+    shouldAct: (_ns, host) => !isHome(host),
     onVisit: (_ns: NS, host: string) => {
       if (!ns.hasRootAccess(host)) {
         return;
