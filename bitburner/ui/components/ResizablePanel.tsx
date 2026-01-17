@@ -95,6 +95,9 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: colors.panelShadow,
     userSelect: "none",
     pointerEvents: "auto",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
   },
   titleBar: {
     display: "flex",
@@ -109,6 +112,9 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     gap: spacing.sm,
+    flex: 1,
+    minHeight: 0,
+    overflow: "auto",
   },
   resizeHandle: {
     position: "absolute",
