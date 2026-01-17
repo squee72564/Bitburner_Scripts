@@ -7,6 +7,6 @@ type ReactDomCompat = {
   createRoot?: (...args: unknown[]) => unknown;
 };
 
-const ReactDOM = cheatyWindow.ReactDOM as ReactDomCompat;
+const ReactDOM = cheatyWindow.ReactDOM as unknown as ReactDomCompat;
 
 export { React, ReactDOM, cheatyDocument };

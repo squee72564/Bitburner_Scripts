@@ -2,7 +2,7 @@ import type React from 'react';
 
 declare global {
   namespace JSX {
-    type Element = React.ReactElement<unknown, unknown>;
+    type Element = React.ReactElement<unknown, React.JSXElementConstructor<unknown> | string>;
     interface IntrinsicElements {
       [elemName: string]: unknown;
     }
