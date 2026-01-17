@@ -318,6 +318,7 @@ export async function main(ns: NS): Promise<void> {
           `Plan: ${assignment.runner} -> ${assignment.target} (${assignment.threads} threads)`,
         );
       }
+      return;
     } else {
       killRunnerScripts(ns, runners);
 
