@@ -1,4 +1,4 @@
-import { NS } from "@ns";
+import { NS } from '@ns';
 
 export type HgwDecisionConfig = {
   securityEpsilon?: number;
@@ -9,7 +9,7 @@ export type HgwDecisionConfig = {
 };
 
 export type HgwDecision = {
-  op: "weaken" | "grow" | "hack" | "skip";
+  op: 'weaken' | 'grow' | 'hack' | 'skip';
   threads: number;
   reason: string;
 };
@@ -18,10 +18,10 @@ export function decideHgwOperation(
   ns: NS,
   host: string,
   runner: string,
-  config: HgwDecisionConfig = {}
+  config: HgwDecisionConfig = {},
 ): HgwDecision {
   if (!ns.hasRootAccess(host)) {
-    return { op: "skip", threads: 0, reason: "no-root" };
+    return { op: 'skip', threads: 0, reason: 'no-root' };
   }
 
   const security = ns.getServerSecurityLevel(host);
@@ -40,42 +40,42 @@ export function decideHgwOperation(
   if (security > minSecurity + epsilon) {
     const weakenPerThread = ns.weakenAnalyze(1, cores);
     const needed = weakenPerThread > 0 ? Math.ceil((security - minSecurity) / weakenPerThread) : 0;
-    const threads = capThreads(needed, maxThreadsFor(ns, "weaken", runner, config.maxThreads));
-    return { op: "weaken", threads, reason: "security-high" };
+    const threads = capThreads(needed, maxThreadsFor(ns, 'weaken', runner, config.maxThreads));
+    return { op: 'weaken', threads, reason: 'security-high' };
   }
 
   if (moneyRatio < minMoneyRatio) {
     const multiplier = maxMoney > 0 ? maxMoney / Math.max(money, 1) : 1;
     const needed = Math.ceil(ns.growthAnalyze(host, multiplier, cores));
-    const threads = capThreads(needed, maxThreadsFor(ns, "grow", runner, config.maxThreads));
-    return { op: "grow", threads, reason: "money-low" };
+    const threads = capThreads(needed, maxThreadsFor(ns, 'grow', runner, config.maxThreads));
+    return { op: 'grow', threads, reason: 'money-low' };
   }
 
   const requiredLevel = ns.getServerRequiredHackingLevel(host);
   if (ns.getHackingLevel() < requiredLevel) {
-    return { op: "skip", threads: 0, reason: "hack-level-low" };
+    return { op: 'skip', threads: 0, reason: 'hack-level-low' };
   }
 
   const chance = ns.hackAnalyzeChance(host);
   if (chance < minHackChance) {
-    return { op: "skip", threads: 0, reason: "hack-chance-low" };
+    return { op: 'skip', threads: 0, reason: 'hack-chance-low' };
   }
 
   const hackPerThread = ns.hackAnalyze(host);
   if (hackPerThread <= 0 || maxMoney <= 0) {
-    return { op: "skip", threads: 0, reason: "no-hack-value" };
+    return { op: 'skip', threads: 0, reason: 'no-hack-value' };
   }
 
   const needed = Math.ceil(hackFraction / hackPerThread);
-  const threads = capThreads(needed, maxThreadsFor(ns, "hack", runner, config.maxThreads));
-  return { op: "hack", threads, reason: "ready" };
+  const threads = capThreads(needed, maxThreadsFor(ns, 'hack', runner, config.maxThreads));
+  return { op: 'hack', threads, reason: 'ready' };
 }
 
 function maxThreadsFor(
   ns: NS,
-  op: "weaken" | "grow" | "hack",
+  op: 'weaken' | 'grow' | 'hack',
   runner: string,
-  cap?: number
+  cap?: number,
 ): number {
   const ramCost = ns.getFunctionRamCost(op);
   const free = ns.getServerMaxRam(runner) - ns.getServerUsedRam(runner);

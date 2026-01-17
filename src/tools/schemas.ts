@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from 'zod/v4';
 
 export const serverInputSchema = z
   .object({
@@ -24,7 +24,7 @@ export const getAllFilesOutputSchema = z.object({
     z.object({
       filename: z.string(),
       content: z.string(),
-    })
+    }),
   ),
 });
 export const calculateRamOutputSchema = z.object({

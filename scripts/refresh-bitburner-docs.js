@@ -2,8 +2,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const https = require('node:https');
 
-const BASE_API = 'https://api.github.com/repos/bitburner-official/bitburner-src/contents/markdown?ref=stable';
-const RAW_BASE = 'https://raw.githubusercontent.com/bitburner-official/bitburner-src/stable/markdown';
+const BASE_API =
+  'https://api.github.com/repos/bitburner-official/bitburner-src/contents/markdown?ref=stable';
+const RAW_BASE =
+  'https://raw.githubusercontent.com/bitburner-official/bitburner-src/stable/markdown';
 
 function fetch(url) {
   return new Promise((resolve, reject) => {
@@ -28,7 +30,7 @@ function fetch(url) {
             }
             resolve(data);
           });
-        }
+        },
       )
       .on('error', reject);
   });
@@ -71,9 +73,7 @@ async function main() {
   const nsFiles = items
     .filter(
       (item) =>
-        item.type === 'file' &&
-        item.name.startsWith('bitburner.ns') &&
-        item.name.endsWith('.md')
+        item.type === 'file' && item.name.startsWith('bitburner.ns') && item.name.endsWith('.md'),
     )
     .map((item) => item.name);
 
@@ -88,11 +88,7 @@ async function main() {
 
   const indexText = await fetchText(`${RAW_BASE}/bitburner.ns.md`);
   const index = buildIndex(indexText);
-  fs.writeFileSync(
-    path.join(targetDir, 'index.json'),
-    JSON.stringify(index, null, 2),
-    'utf-8'
-  );
+  fs.writeFileSync(path.join(targetDir, 'index.json'), JSON.stringify(index, null, 2), 'utf-8');
 
   fs.writeFileSync(
     path.join(targetDir, 'README.txt'),
@@ -101,7 +97,7 @@ async function main() {
       'Source: https://github.com/bitburner-official/bitburner-src (stable).',
       'Files included: bitburner.ns.md and bitburner.ns.*.md',
     ].join('\n') + '\n',
-    'utf-8'
+    'utf-8',
   );
 
   console.log(`Synced ${nsFiles.length} files.`);

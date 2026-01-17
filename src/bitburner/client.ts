@@ -1,7 +1,7 @@
-import WebSocket, { RawData } from "ws";
-import { Logger } from "../logger";
-import type { ConnectionState, JsonRpcRequest, JsonRpcResponse, JsonRpcFailure } from "./types";
-import { RemoteApiError } from "./types";
+import WebSocket, { RawData } from 'ws';
+import { Logger } from '../logger';
+import type { ConnectionState, JsonRpcRequest, JsonRpcResponse, JsonRpcFailure } from './types';
+import { RemoteApiError } from './types';
 
 export type ClientOptions = {
   url: string;
@@ -18,14 +18,17 @@ type PendingRequest = {
 
 export class BitburnerClient {
   private ws: WebSocket | null = null;
-  private state: ConnectionState = "disconnected";
+  private state: ConnectionState = 'disconnected';
   private nextId = 1;
   private pending = new Map<number, PendingRequest>();
   private reconnectTimer: NodeJS.Timeout | null = null;
   private reconnectDelay: number;
   private stopped = false;
 
-  constructor(private options: ClientOptions, private logger: Logger) {
+  constructor(
+    private options: ClientOptions,
+    private logger: Logger,
+  ) {
     this.reconnectDelay = options.reconnectBaseMs;
   }
 
@@ -45,13 +48,13 @@ export class BitburnerClient {
   }
 
   async call(method: string, params?: unknown): Promise<unknown> {
-    if (this.state !== "connected" || !this.ws) {
-      throw new Error("Bitburner disconnected");
+    if (this.state !== 'connected' || !this.ws) {
+      throw new Error('Bitburner disconnected');
     }
 
     const id = this.nextId++;
     const payload: JsonRpcRequest = {
-      jsonrpc: "2.0",
+      jsonrpc: '2.0',
       id,
       method,
       params,
@@ -75,65 +78,65 @@ export class BitburnerClient {
   }
 
   async getFileNames(server: string): Promise<string[]> {
-    return (await this.call("getFileNames", { server })) as string[];
+    return (await this.call('getFileNames', { server })) as string[];
   }
 
   async getFile(filename: string, server: string): Promise<string> {
-    return (await this.call("getFile", { filename, server })) as string;
+    return (await this.call('getFile', { filename, server })) as string;
   }
 
-  async pushFile(filename: string, content: string, server: string): Promise<"OK"> {
-    return (await this.call("pushFile", { filename, content, server })) as "OK";
+  async pushFile(filename: string, content: string, server: string): Promise<'OK'> {
+    return (await this.call('pushFile', { filename, content, server })) as 'OK';
   }
 
-  async deleteFile(filename: string, server: string): Promise<"OK"> {
-    return (await this.call("deleteFile", { filename, server })) as "OK";
+  async deleteFile(filename: string, server: string): Promise<'OK'> {
+    return (await this.call('deleteFile', { filename, server })) as 'OK';
   }
 
   async getAllFiles(server: string): Promise<{ filename: string; content: string }[]> {
-    return (await this.call("getAllFiles", { server })) as { filename: string; content: string }[];
+    return (await this.call('getAllFiles', { server })) as { filename: string; content: string }[];
   }
 
   async calculateRam(filename: string, server: string): Promise<number> {
-    return (await this.call("calculateRam", { filename, server })) as number;
+    return (await this.call('calculateRam', { filename, server })) as number;
   }
 
   async getDefinitionFile(): Promise<string> {
-    return (await this.call("getDefinitionFile")) as string;
+    return (await this.call('getDefinitionFile')) as string;
   }
 
   private async connect(): Promise<void> {
-    if (this.stopped || this.state === "connecting" || this.state === "connected") {
+    if (this.stopped || this.state === 'connecting' || this.state === 'connected') {
       return;
     }
 
-    this.state = "connecting";
-    this.logger.info("Connecting to Bitburner Remote API", { url: this.options.url });
+    this.state = 'connecting';
+    this.logger.info('Connecting to Bitburner Remote API', { url: this.options.url });
 
     await new Promise<void>((resolve, reject) => {
       const ws = new WebSocket(this.options.url);
       this.ws = ws;
 
-      ws.on("open", () => {
-        this.state = "connected";
+      ws.on('open', () => {
+        this.state = 'connected';
         this.reconnectDelay = this.options.reconnectBaseMs;
-        this.logger.info("Bitburner Remote API connected");
+        this.logger.info('Bitburner Remote API connected');
         resolve();
       });
 
-      ws.on("message", (data: RawData) => this.handleMessage(data.toString()));
+      ws.on('message', (data: RawData) => this.handleMessage(data.toString()));
 
-      ws.on("close", () => {
-        this.logger.warn("Bitburner Remote API disconnected");
-        this.state = "disconnected";
-        this.rejectPending(new Error("Bitburner disconnected"));
+      ws.on('close', () => {
+        this.logger.warn('Bitburner Remote API disconnected');
+        this.state = 'disconnected';
+        this.rejectPending(new Error('Bitburner disconnected'));
         this.scheduleReconnect();
       });
 
-      ws.on("error", (err: Error) => {
-        this.logger.error("Bitburner Remote API error", { error: err.message });
-        if (this.state !== "connected") {
-          this.state = "disconnected";
+      ws.on('error', (err: Error) => {
+        this.logger.error('Bitburner Remote API error', { error: err.message });
+        if (this.state !== 'connected') {
+          this.state = 'disconnected';
           this.scheduleReconnect();
           reject(err);
         }
@@ -145,12 +148,12 @@ export class BitburnerClient {
     let message: JsonRpcResponse;
     try {
       message = JSON.parse(payload) as JsonRpcResponse;
-  } catch (_err) {
-      this.logger.warn("Invalid JSON-RPC message", { payload });
+    } catch (_err) {
+      this.logger.warn('Invalid JSON-RPC message', { payload });
       return;
     }
 
-    if (!message || typeof message !== "object" || typeof message.id !== "number") {
+    if (!message || typeof message !== 'object' || typeof message.id !== 'number') {
       return;
     }
 
@@ -177,13 +180,16 @@ export class BitburnerClient {
     const delay = this.reconnectDelay + (Math.random() * 2 - 1) * jitter;
     const nextDelay = Math.min(this.reconnectDelay * 2, this.options.reconnectMaxMs);
 
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      this.connect().catch((err) => {
-        this.logger.warn("Reconnect attempt failed", { error: err.message });
-        this.scheduleReconnect();
-      });
-    }, Math.max(this.options.reconnectBaseMs, delay));
+    this.reconnectTimer = setTimeout(
+      () => {
+        this.reconnectTimer = null;
+        this.connect().catch((err) => {
+          this.logger.warn('Reconnect attempt failed', { error: err.message });
+          this.scheduleReconnect();
+        });
+      },
+      Math.max(this.options.reconnectBaseMs, delay),
+    );
 
     this.reconnectDelay = nextDelay;
   }

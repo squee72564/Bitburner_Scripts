@@ -1,6 +1,6 @@
-import { React } from "/ui/react";
-import { cn } from "/ui/lib/cn";
-import { colors, font, spacing } from "/ui/theme";
+import { React } from '/ui/react';
+import { cn } from '/ui/lib/cn';
+import { colors, font, spacing } from '/ui/theme';
 
 type InputProps = {
   value?: string;
@@ -9,11 +9,11 @@ type InputProps = {
   disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  type?: "text" | "number" | "password";
+  type?: 'text' | 'number' | 'password';
 };
 
 export function Input(props: InputProps): JSX.Element {
-  const { value, onChange, placeholder, disabled, className, style, type = "text" } = props;
+  const { value, onChange, placeholder, disabled, className, style, type = 'text' } = props;
   return (
     <input
       type={type}
@@ -31,9 +31,9 @@ const baseStyles: React.CSSProperties = {
   background: colors.selectBg,
   color: colors.text,
   border: `1px solid ${colors.accentBorder}`,
-  borderRadius: "4px",
+  borderRadius: '4px',
   padding: `${spacing.xs} ${spacing.sm}`,
   fontFamily: font.family,
   fontSize: font.size,
-  width: "100%",
+  width: '100%',
 };

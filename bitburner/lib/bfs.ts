@@ -1,4 +1,4 @@
-import { NS } from "@ns";
+import { NS } from '@ns';
 
 export type BfsOptions = {
   shouldAct?: (ns: NS, host: string) => boolean;

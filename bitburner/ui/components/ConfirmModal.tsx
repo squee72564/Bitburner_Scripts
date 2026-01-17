@@ -1,7 +1,7 @@
-import { React } from "/ui/react";
-import { Modal } from "/ui/components/Modal";
-import { Button } from "/ui/components/Button";
-import { colors, font, spacing } from "/ui/theme";
+import { React } from '/ui/react';
+import { Modal } from '/ui/components/Modal';
+import { Button } from '/ui/components/Button';
+import { colors, font, spacing } from '/ui/theme';
 
 type ConfirmModalProps = {
   title: string;
@@ -10,7 +10,7 @@ type ConfirmModalProps = {
   onCancel: () => void;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmVariant?: "default" | "destructive";
+  confirmVariant?: 'default' | 'destructive';
 };
 
 export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
@@ -19,9 +19,9 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
     message,
     onConfirm,
     onCancel,
-    confirmLabel = "Confirm",
-    cancelLabel = "Cancel",
-    confirmVariant = "default",
+    confirmLabel = 'Confirm',
+    cancelLabel = 'Cancel',
+    confirmVariant = 'default',
   } = props;
 
   return (
@@ -33,7 +33,10 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
           <Button variant="outline" onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <Button variant={confirmVariant === "destructive" ? "destructive" : "default"} onClick={onConfirm}>
+          <Button
+            variant={confirmVariant === 'destructive' ? 'destructive' : 'default'}
+            onClick={onConfirm}
+          >
             {confirmLabel}
           </Button>
         </div>
@@ -44,10 +47,10 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    minWidth: "260px",
+    minWidth: '260px',
     padding: spacing.lg,
     border: `1px solid ${colors.panelBorder}`,
-    borderRadius: "6px",
+    borderRadius: '6px',
     background: colors.panelBg,
     color: colors.text,
     fontFamily: font.family,
@@ -65,8 +68,8 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.4,
   },
   actions: {
-    display: "flex",
-    justifyContent: "flex-end",
+    display: 'flex',
+    justifyContent: 'flex-end',
     gap: spacing.sm,
   },
 };

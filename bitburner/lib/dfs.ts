@@ -1,4 +1,4 @@
-import { NS } from "@ns";
+import { NS } from '@ns';
 export type DfsOptions = {
   shouldAct?: (ns: NS, host: string) => boolean;
   onVisit?: (ns: NS, host: string) => void;

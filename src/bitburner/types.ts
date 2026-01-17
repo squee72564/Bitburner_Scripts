@@ -1,12 +1,12 @@
 export type JsonRpcRequest = {
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   id: number;
   method: string;
   params?: unknown;
 };
 
 export type JsonRpcSuccess = {
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   id: number;
   result: unknown;
 };
@@ -18,14 +18,14 @@ export type JsonRpcError = {
 };
 
 export type JsonRpcFailure = {
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   id: number;
   error: JsonRpcError;
 };
 
 export type JsonRpcResponse = JsonRpcSuccess | JsonRpcFailure;
 
-export type ConnectionState = "disconnected" | "connecting" | "connected";
+export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
 
 export class RemoteApiError extends Error {
   readonly code: number;

@@ -1,9 +1,9 @@
-import { React } from "/ui/react";
-import { cn } from "/ui/lib/cn";
-import { colors, font, spacing } from "/ui/theme";
+import { React } from '/ui/react';
+import { cn } from '/ui/lib/cn';
+import { colors, font, spacing } from '/ui/theme';
 
-type ButtonVariant = "default" | "outline" | "ghost" | "destructive";
-type ButtonSize = "sm" | "md";
+type ButtonVariant = 'default' | 'outline' | 'ghost' | 'destructive';
+type ButtonSize = 'sm' | 'md';
 
 type ButtonProps = {
   children: React.ReactNode;
@@ -20,8 +20,8 @@ export function Button(props: ButtonProps): JSX.Element {
     children,
     onClick,
     disabled = false,
-    variant = "default",
-    size = "md",
+    variant = 'default',
+    size = 'md',
     className,
     style,
   } = props;
@@ -41,8 +41,8 @@ export function Button(props: ButtonProps): JSX.Element {
 const baseStyles: React.CSSProperties = {
   color: colors.text,
   border: `1px solid ${colors.buttonBorder}`,
-  borderRadius: "4px",
-  cursor: "pointer",
+  borderRadius: '4px',
+  cursor: 'pointer',
   fontFamily: font.family,
   fontSize: font.size,
 };
@@ -56,7 +56,7 @@ const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   },
   ghost: {
     background: colors.buttonGhost,
-    border: "1px solid transparent",
+    border: '1px solid transparent',
   },
   destructive: {
     background: colors.buttonDestructive,

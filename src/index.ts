@@ -1,14 +1,14 @@
-import "dotenv/config";
-import { loadConfig } from "./config";
-import { BitburnerClient } from "./bitburner/client";
-import { Logger } from "./logger";
-import { startMcpServer } from "./mcp/server";
+import 'dotenv/config';
+import { loadConfig } from './config';
+import { BitburnerClient } from './bitburner/client';
+import { Logger } from './logger';
+import { startMcpServer } from './mcp/server';
 
 async function main(): Promise<void> {
   const config = loadConfig();
   const logger = new Logger(config.logLevel);
 
-  logger.info("Starting Bitburner MCP server", {
+  logger.info('Starting Bitburner MCP server', {
     rpcUrl: config.rpcUrl,
     fileWriteMaxBytes: config.fileWriteMaxBytes,
   });
@@ -20,23 +20,23 @@ async function main(): Promise<void> {
       reconnectBaseMs: config.rpcReconnectBaseMs,
       reconnectMaxMs: config.rpcReconnectMaxMs,
     },
-    logger
+    logger,
   );
 
   client.start().catch((err) => {
-    logger.warn("Initial connection failed", { error: err.message });
+    logger.warn('Initial connection failed', { error: err.message });
   });
 
   await startMcpServer(client, config, logger);
 
   const shutdown = async () => {
-    logger.info("Shutting down");
+    logger.info('Shutting down');
     await client.stop();
     process.exit(0);
   };
 
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 }
 
 main().catch((err) => {

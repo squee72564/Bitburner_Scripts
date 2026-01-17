@@ -1,6 +1,6 @@
-import { React, cheatyDocument } from "/ui/react";
-import { colors, font, spacing } from "/ui/theme";
-import { CloseButton } from "/ui/components/CloseButton";
+import { React, cheatyDocument } from '/ui/react';
+import { colors, font, spacing } from '/ui/theme';
+import { CloseButton } from '/ui/components/CloseButton';
 
 type ResizablePanelProps = {
   title: string;
@@ -54,11 +54,11 @@ export function ResizablePanel(props: ResizablePanelProps): JSX.Element {
       dragRef.current = null;
       resizeRef.current = null;
     };
-    cheatyDocument.addEventListener("mousemove", onMove);
-    cheatyDocument.addEventListener("mouseup", onUp);
+    cheatyDocument.addEventListener('mousemove', onMove);
+    cheatyDocument.addEventListener('mouseup', onUp);
     return () => {
-      cheatyDocument.removeEventListener("mousemove", onMove);
-      cheatyDocument.removeEventListener("mouseup", onUp);
+      cheatyDocument.removeEventListener('mousemove', onMove);
+      cheatyDocument.removeEventListener('mouseup', onUp);
     };
   }, [minWidth, minHeight, pos, size]);
 
@@ -83,46 +83,46 @@ export function ResizablePanel(props: ResizablePanelProps): JSX.Element {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    position: "relative",
+    position: 'relative',
     zIndex: 1,
     padding: `${spacing.lg} ${spacing.lg} ${spacing.md}`,
     border: `1px solid ${colors.panelBorder}`,
-    borderRadius: "6px",
+    borderRadius: '6px',
     background: colors.panelBg,
     color: colors.text,
     fontFamily: font.family,
     fontSize: font.size,
     boxShadow: colors.panelShadow,
-    userSelect: "none",
-    pointerEvents: "auto",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
+    userSelect: 'none',
+    pointerEvents: 'auto',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
   },
   titleBar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: spacing.lg,
-    cursor: "move",
+    cursor: 'move',
     fontSize: font.titleSize,
     fontWeight: 600,
   },
   body: {
-    display: "flex",
-    flexDirection: "column",
+    display: 'flex',
+    flexDirection: 'column',
     gap: spacing.sm,
     flex: 1,
     minHeight: 0,
-    overflow: "auto",
+    overflow: 'auto',
   },
   resizeHandle: {
-    position: "absolute",
+    position: 'absolute',
     right: spacing.xs,
     bottom: spacing.xs,
-    width: "14px",
-    height: "14px",
-    cursor: "nwse-resize",
+    width: '14px',
+    height: '14px',
+    cursor: 'nwse-resize',
     borderRight: `2px solid ${colors.resizeHandle}`,
     borderBottom: `2px solid ${colors.resizeHandle}`,
   },

@@ -1,4 +1,4 @@
-import { React } from "/ui/react";
+import { React } from '/ui/react';
 
 type FloatingPanelProps = {
   children: React.ReactNode;
@@ -10,9 +10,9 @@ export function FloatingPanel(props: FloatingPanelProps): JSX.Element {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    position: "fixed",
+    position: 'fixed',
     inset: 0,
-    pointerEvents: "none",
+    pointerEvents: 'none',
     zIndex: 9999,
   },
 };

@@ -1,17 +1,17 @@
-import { NS } from "@ns";
-import { ServerDfs } from "lib/dfs";
+import { NS } from '@ns';
+import { ServerDfs } from 'lib/dfs';
 
-const SCRIPT = "agent/starter-hack.js";
+const SCRIPT = 'agent/starter-hack.js';
 
 export async function main(ns: NS): Promise<void> {
-  ns.disableLog("scan");
+  ns.disableLog('scan');
   const servers = getAllServers(ns);
 
   const purchased = new Set(ns.getPurchasedServers());
-  const ramPerThread = ns.getScriptRam(SCRIPT, "home");
+  const ramPerThread = ns.getScriptRam(SCRIPT, 'home');
   const runners = getRunnerTiers(ns, servers, purchased, ramPerThread);
   const targets = servers.filter((host) => {
-    if (host === "home") {
+    if (host === 'home') {
       return false;
     }
     if (!ns.hasRootAccess(host)) {
@@ -26,10 +26,7 @@ export async function main(ns: NS): Promise<void> {
   const runnerList = [...runners.tierA, ...runners.tierB, ...runners.tierC];
   const alreadyRunning = getRunningTargets(ns, runnerList);
   const freeRamByHost = new Map(
-    runnerList.map((host) => [
-      host,
-      ns.getServerMaxRam(host) - ns.getServerUsedRam(host),
-    ])
+    runnerList.map((host) => [host, ns.getServerMaxRam(host) - ns.getServerUsedRam(host)]),
   );
 
   for (const target of targets) {
@@ -44,8 +41,8 @@ export async function main(ns: NS): Promise<void> {
       ns.tprint(`WARN no RAM available for ${target}`);
       continue;
     }
-    if (runner !== "home") {
-      await ns.scp(SCRIPT, runner, "home");
+    if (runner !== 'home') {
+      await ns.scp(SCRIPT, runner, 'home');
     }
     const pid = ns.exec(SCRIPT, runner, 1, target);
     if (pid !== 0) {
@@ -58,13 +55,13 @@ export async function main(ns: NS): Promise<void> {
 }
 
 function getAllServers(ns: NS): string[] {
-  const servers: string[] = ["home"];
+  const servers: string[] = ['home'];
   const dfs = new ServerDfs(ns, {
     onVisit: (_ns, host) => {
       servers.push(host);
     },
   });
-  dfs.traverse("home");
+  dfs.traverse('home');
   return servers;
 }
 
@@ -85,10 +82,10 @@ function getRunnerTiers(
   ns: NS,
   servers: string[],
   purchased: Set<string>,
-  ramPerThread: number
+  ramPerThread: number,
 ): { tierA: string[]; tierB: string[]; tierC: string[] } {
   const tierA = servers.filter((host) => {
-    if (host === "home") return false;
+    if (host === 'home') return false;
     if (!ns.hasRootAccess(host)) return false;
     if (purchased.has(host)) return false;
     const maxRam = ns.getServerMaxRam(host);
@@ -103,7 +100,7 @@ function getRunnerTiers(
   });
 
   const tierC =
-    ns.hasRootAccess("home") && ns.getServerMaxRam("home") >= ramPerThread ? ["home"] : [];
+    ns.hasRootAccess('home') && ns.getServerMaxRam('home') >= ramPerThread ? ['home'] : [];
 
   return { tierA, tierB, tierC };
 }
@@ -111,7 +108,7 @@ function getRunnerTiers(
 function pickRunner(
   candidates: string[],
   freeRam: Map<string, number>,
-  ramPerThread: number
+  ramPerThread: number,
 ): string | null {
   for (const host of candidates) {
     const free = freeRam.get(host) ?? 0;

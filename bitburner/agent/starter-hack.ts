@@ -1,7 +1,7 @@
-import { NS } from "@ns";
+import { NS } from '@ns';
 
 export async function main(ns: NS): Promise<void> {
-  const target = (ns.args[0] as string) || "n00dles";
+  const target = (ns.args[0] as string) || 'n00dles';
 
   if (!ns.hasRootAccess(target)) {
     ns.tprint(`No root access for ${target}.`);

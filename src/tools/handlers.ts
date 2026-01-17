@@ -1,9 +1,9 @@
-import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { BitburnerClient } from "../bitburner/client";
-import { RemoteApiError } from "../bitburner/types";
-import type { Config } from "../config";
-import { Logger } from "../logger";
+import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { BitburnerClient } from '../bitburner/client';
+import { RemoteApiError } from '../bitburner/types';
+import type { Config } from '../config';
+import { Logger } from '../logger';
 import {
   calculateRamOutputSchema,
   definitionFileOutputSchema,
@@ -13,8 +13,8 @@ import {
   listFilesOutputSchema,
   readFileOutputSchema,
   serverInputSchema,
-} from "./schemas";
-import { assertFilename, normalizeServer } from "./validators";
+} from './schemas';
+import { assertFilename, normalizeServer } from './validators';
 
 function toMcpError(error: unknown): McpError {
   if (error instanceof McpError) return error;
@@ -25,18 +25,18 @@ function toMcpError(error: unknown): McpError {
     });
   }
   if (error instanceof Error) {
-    if (error.message.includes("disconnected")) {
+    if (error.message.includes('disconnected')) {
       return new McpError(ErrorCode.ConnectionClosed, error.message);
     }
-    if (error.message.includes("timeout")) {
+    if (error.message.includes('timeout')) {
       return new McpError(ErrorCode.RequestTimeout, error.message);
     }
-    if (error.message.includes("filename") || error.message.includes("content")) {
+    if (error.message.includes('filename') || error.message.includes('content')) {
       return new McpError(ErrorCode.InvalidParams, error.message);
     }
     return new McpError(ErrorCode.InternalError, error.message);
   }
-  return new McpError(ErrorCode.InternalError, "Unknown error");
+  return new McpError(ErrorCode.InternalError, 'Unknown error');
 }
 
 function toResponse<T>(result: T) {
@@ -44,8 +44,8 @@ function toResponse<T>(result: T) {
     structuredContent: { result },
     content: [
       {
-        type: "text" as const,
-        text: typeof result === "string" ? result : JSON.stringify(result, null, 2),
+        type: 'text' as const,
+        text: typeof result === 'string' ? result : JSON.stringify(result, null, 2),
       },
     ],
   };
@@ -55,12 +55,12 @@ export function registerTools(
   server: McpServer,
   client: BitburnerClient,
   config: Config,
-  logger: Logger
+  logger: Logger,
 ): void {
   server.registerTool(
-    "list_files",
+    'list_files',
     {
-      description: "List files on a Bitburner server",
+      description: 'List files on a Bitburner server',
       inputSchema: serverInputSchema,
       outputSchema: listFilesOutputSchema,
     },
@@ -70,16 +70,16 @@ export function registerTools(
         const result = await client.getFileNames(serverName);
         return toResponse(result);
       } catch (error) {
-        logger.warn("list_files failed", { error: (error as Error).message });
+        logger.warn('list_files failed', { error: (error as Error).message });
         throw toMcpError(error);
       }
-    }
+    },
   );
 
   server.registerTool(
-    "read_file",
+    'read_file',
     {
-      description: "Read a file from a Bitburner server",
+      description: 'Read a file from a Bitburner server',
       inputSchema: filenameInputSchema,
       outputSchema: readFileOutputSchema,
     },
@@ -90,16 +90,16 @@ export function registerTools(
         const result = await client.getFile(input.filename, serverName);
         return toResponse(result);
       } catch (error) {
-        logger.warn("read_file failed", { error: (error as Error).message });
+        logger.warn('read_file failed', { error: (error as Error).message });
         throw toMcpError(error);
       }
-    }
+    },
   );
 
   server.registerTool(
-    "get_all_files",
+    'get_all_files',
     {
-      description: "Get all files from a Bitburner server",
+      description: 'Get all files from a Bitburner server',
       inputSchema: serverInputSchema,
       outputSchema: getAllFilesOutputSchema,
     },
@@ -109,16 +109,16 @@ export function registerTools(
         const result = await client.getAllFiles(serverName);
         return toResponse(result);
       } catch (error) {
-        logger.warn("get_all_files failed", { error: (error as Error).message });
+        logger.warn('get_all_files failed', { error: (error as Error).message });
         throw toMcpError(error);
       }
-    }
+    },
   );
 
   server.registerTool(
-    "calculate_ram",
+    'calculate_ram',
     {
-      description: "Calculate RAM usage of a script",
+      description: 'Calculate RAM usage of a script',
       inputSchema: filenameInputSchema,
       outputSchema: calculateRamOutputSchema,
     },
@@ -129,16 +129,16 @@ export function registerTools(
         const result = await client.calculateRam(input.filename, serverName);
         return toResponse(result);
       } catch (error) {
-        logger.warn("calculate_ram failed", { error: (error as Error).message });
+        logger.warn('calculate_ram failed', { error: (error as Error).message });
         throw toMcpError(error);
       }
-    }
+    },
   );
 
   server.registerTool(
-    "get_netscript_definitions",
+    'get_netscript_definitions',
     {
-      description: "Fetch Netscript TypeScript definitions",
+      description: 'Fetch Netscript TypeScript definitions',
       inputSchema: emptyInputSchema,
       outputSchema: definitionFileOutputSchema,
     },
@@ -147,9 +147,9 @@ export function registerTools(
         const result = await client.getDefinitionFile();
         return toResponse(result);
       } catch (error) {
-        logger.warn("get_netscript_definitions failed", { error: (error as Error).message });
+        logger.warn('get_netscript_definitions failed', { error: (error as Error).message });
         throw toMcpError(error);
       }
-    }
+    },
   );
 }

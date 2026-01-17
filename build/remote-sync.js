@@ -1,22 +1,22 @@
-require("dotenv/config");
+require('dotenv/config');
 
-const fs = require("node:fs");
-const path = require("node:path");
-const chokidar = require("chokidar");
-const fg = require("fast-glob");
-const WebSocket = require("ws");
-const { dist, allowedFiletypes } = require("./config");
+const fs = require('node:fs');
+const path = require('node:path');
+const chokidar = require('chokidar');
+const fg = require('fast-glob');
+const WebSocket = require('ws');
+const { dist, allowedFiletypes } = require('./config');
 
 const rpcUrl = process.env.BITBURNER_RPC_URL;
 if (!rpcUrl) {
-  throw new Error("BITBURNER_RPC_URL is required");
+  throw new Error('BITBURNER_RPC_URL is required');
 }
 
-const server = process.env.BITBURNER_SERVER || "home";
-const timeoutMs = Number.parseInt(process.env.RPC_TIMEOUT_MS || "5000", 10);
+const server = process.env.BITBURNER_SERVER || 'home';
+const timeoutMs = Number.parseInt(process.env.RPC_TIMEOUT_MS || '5000', 10);
 
 function normalize(p) {
-  return p.replace(/\\/g, "/");
+  return p.replace(/\\/g, '/');
 }
 
 class RpcClient {
@@ -37,22 +37,22 @@ class RpcClient {
     if (this.connected || this.ws) return;
     this.ws = new WebSocket(this.url);
 
-    this.ws.on("open", () => {
+    this.ws.on('open', () => {
       this.connected = true;
       console.log(`Remote sync connected (${this.url})`);
       flushQueue();
     });
 
-    this.ws.on("message", (data) => this.handleMessage(data.toString()));
+    this.ws.on('message', (data) => this.handleMessage(data.toString()));
 
-    this.ws.on("close", () => {
+    this.ws.on('close', () => {
       this.connected = false;
       this.ws = null;
-      this.rejectPending(new Error("Remote API disconnected"));
+      this.rejectPending(new Error('Remote API disconnected'));
       this.scheduleReconnect();
     });
 
-    this.ws.on("error", () => {
+    this.ws.on('error', () => {
       this.connected = false;
       this.ws = null;
       this.scheduleReconnect();
@@ -69,11 +69,11 @@ class RpcClient {
 
   call(method, params) {
     if (!this.connected || !this.ws) {
-      return Promise.reject(new Error("Remote API disconnected"));
+      return Promise.reject(new Error('Remote API disconnected'));
     }
 
     const id = this.nextId++;
-    const payload = { jsonrpc: "2.0", id, method, params };
+    const payload = { jsonrpc: '2.0', id, method, params };
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -100,7 +100,7 @@ class RpcClient {
       return;
     }
 
-    if (!message || typeof message !== "object" || typeof message.id !== "number") {
+    if (!message || typeof message !== 'object' || typeof message.id !== 'number') {
       return;
     }
 
@@ -111,7 +111,7 @@ class RpcClient {
     this.pending.delete(message.id);
 
     if (message.error) {
-      pending.reject(new Error(message.error.message || "Remote API error"));
+      pending.reject(new Error(message.error.message || 'Remote API error'));
       return;
     }
 
@@ -133,11 +133,11 @@ const queue = new Map();
 let flushInProgress = false;
 
 async function pushFile(filename, content) {
-  await client.call("pushFile", { filename, content, server });
+  await client.call('pushFile', { filename, content, server });
 }
 
 async function deleteFile(filename) {
-  await client.call("deleteFile", { filename, server });
+  await client.call('deleteFile', { filename, server });
 }
 
 async function flushQueue() {
@@ -146,7 +146,7 @@ async function flushQueue() {
 
   for (const [filename, op] of queue) {
     try {
-      if (op.type === "delete") {
+      if (op.type === 'delete') {
         await deleteFile(filename);
         console.log(`${filename} deleted`);
       } else {
@@ -178,26 +178,26 @@ async function initialSync() {
   for (const file of entries) {
     if (!isAllowed(file)) continue;
     const relative = normalize(path.relative(dist, file));
-    const content = await fs.promises.readFile(file, "utf8");
-    enqueue(relative, { type: "push", content });
+    const content = await fs.promises.readFile(file, 'utf8');
+    enqueue(relative, { type: 'push', content });
   }
 }
 
-console.log("Start remote sync...");
+console.log('Start remote sync...');
 client.start();
 initialSync().catch((err) => console.warn(`Initial sync failed: ${err.message}`));
 
-chokidar.watch(`${dist}/**/*`, { ignoreInitial: true }).on("all", async (event, file) => {
+chokidar.watch(`${dist}/**/*`, { ignoreInitial: true }).on('all', async (event, file) => {
   if (!isAllowed(file)) return;
 
   const relative = normalize(path.relative(dist, file));
-  if (event === "unlink") {
-    enqueue(relative, { type: "delete" });
+  if (event === 'unlink') {
+    enqueue(relative, { type: 'delete' });
     return;
   }
 
-  if (event === "add" || event === "change") {
-    const content = await fs.promises.readFile(file, "utf8");
-    enqueue(relative, { type: "push", content });
+  if (event === 'add' || event === 'change') {
+    const content = await fs.promises.readFile(file, 'utf8');
+    enqueue(relative, { type: 'push', content });
   }
 });

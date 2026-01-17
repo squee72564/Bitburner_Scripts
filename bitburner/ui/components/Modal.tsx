@@ -1,5 +1,5 @@
-import { React } from "/ui/react";
-import { colors } from "/ui/theme";
+import { React } from '/ui/react';
+import { colors } from '/ui/theme';
 
 type ModalProps = {
   onClose: () => void;
@@ -17,20 +17,20 @@ export function Modal(props: ModalProps): JSX.Element {
 
 const styles: Record<string, React.CSSProperties> = {
   overlay: {
-    position: "fixed",
+    position: 'fixed',
     inset: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 9999,
   },
   backdrop: {
-    position: "absolute",
+    position: 'absolute',
     inset: 0,
     background: colors.backdrop,
   },
   content: {
-    position: "relative",
+    position: 'relative',
     zIndex: 1,
   },
 };

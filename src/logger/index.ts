@@ -1,4 +1,4 @@
-import type { LogLevel } from "../config";
+import type { LogLevel } from '../config';
 
 const levelRank: Record<LogLevel, number> = {
   debug: 10,
@@ -15,22 +15,27 @@ export class Logger {
   }
 
   debug(message: string, meta?: Record<string, unknown>): void {
-    this.log("debug", message, meta);
+    this.log('debug', message, meta);
   }
 
   info(message: string, meta?: Record<string, unknown>): void {
-    this.log("info", message, meta);
+    this.log('info', message, meta);
   }
 
   warn(message: string, meta?: Record<string, unknown>): void {
-    this.log("warn", message, meta);
+    this.log('warn', message, meta);
   }
 
   error(message: string, meta?: Record<string, unknown>): void {
-    this.log("error", message, meta, true);
+    this.log('error', message, meta, true);
   }
 
-  private log(level: LogLevel, message: string, meta?: Record<string, unknown>, _isError = false): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    meta?: Record<string, unknown>,
+    _isError = false,
+  ): void {
     if (levelRank[level] < levelRank[this.level]) return;
     const payload = {
       level,

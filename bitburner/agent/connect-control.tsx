@@ -1,10 +1,10 @@
-import { NS } from "@ns";
-import { React, ReactDOM, cheatyDocument } from "/ui/react";
-import { ServerDfs } from "lib/dfs";
-import { ResizablePanel } from "/ui/components/ResizablePanel";
-import { FloatingPanel } from "/ui/components/FloatingPanel";
-import { Button } from "/ui/components/Button";
-import { colors, font, spacing } from "/ui/theme";
+import { NS } from '@ns';
+import { React, ReactDOM, cheatyDocument } from '/ui/react';
+import { ServerDfs } from 'lib/dfs';
+import { ResizablePanel } from '/ui/components/ResizablePanel';
+import { FloatingPanel } from '/ui/components/FloatingPanel';
+import { Button } from '/ui/components/Button';
+import { colors, font, spacing } from '/ui/theme';
 
 type ConnectControlProps = {
   ns: NS;
@@ -13,11 +13,11 @@ type ConnectControlProps = {
 };
 
 export async function main(ns: NS): Promise<void> {
-  ns.disableLog("asleep");
+  ns.disableLog('asleep');
 
   const flags = ns.flags([
-    ["help", false],
-    ["h", false],
+    ['help', false],
+    ['h', false],
   ]);
 
   if (flags.help || flags.h) {
@@ -41,12 +41,12 @@ export async function main(ns: NS): Promise<void> {
 
   graphBuilder.traverse();
 
-  const existing = cheatyDocument.getElementById("cc-connect-control-overlay");
+  const existing = cheatyDocument.getElementById('cc-connect-control-overlay');
   if (existing) {
     existing.remove();
   }
-  const overlay = cheatyDocument.createElement("div");
-  overlay.id = "cc-connect-control-overlay";
+  const overlay = cheatyDocument.createElement('div');
+  overlay.id = 'cc-connect-control-overlay';
   cheatyDocument.body.appendChild(overlay);
 
   let shouldExit = false;
@@ -60,7 +60,7 @@ export async function main(ns: NS): Promise<void> {
         adj={adj}
       />
     </React.StrictMode>,
-    overlay
+    overlay,
   );
 
   while (!shouldExit) {
@@ -88,39 +88,44 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
     const commands = path
       .slice(1)
       .map((server) => `connect ${server};`)
-      .join(" ");
+      .join(' ');
     setPathStrings(commands ? [commands] : []);
   }, [adj, currentTarget, ns]);
 
   return (
     <>
       <FloatingPanel>
-        <ResizablePanel title="Server Traversal" onClose={onExit} defaultWidth={560} defaultHeight={460}>
+        <ResizablePanel
+          title="Server Traversal"
+          onClose={onExit}
+          defaultWidth={560}
+          defaultHeight={460}
+        >
           <div style={styles.sectionTitle}>Servers</div>
           <div style={styles.card}>
             <div style={styles.scrollArea}>
-            {Array.from(adj.keys()).map((server) => (
-              <div
-                key={server}
-                style={{
-                  ...styles.rowWrap,
-                  ...(hoveredServer === server ? styles.rowWrapHover : {}),
-                }}
-                onMouseEnter={() => setHoveredServer(server)}
-                onMouseLeave={() => setHoveredServer(null)}
-                onClick={() => setCurrentTarget(server)}
-              >
+              {Array.from(adj.keys()).map((server) => (
                 <div
+                  key={server}
                   style={{
-                    ...styles.row,
-                    ...(hoveredServer === server ? styles.rowHover : {}),
+                    ...styles.rowWrap,
+                    ...(hoveredServer === server ? styles.rowWrapHover : {}),
                   }}
+                  onMouseEnter={() => setHoveredServer(server)}
+                  onMouseLeave={() => setHoveredServer(null)}
+                  onClick={() => setCurrentTarget(server)}
                 >
-                  <p>{server}</p>
+                  <div
+                    style={{
+                      ...styles.row,
+                      ...(hoveredServer === server ? styles.rowHover : {}),
+                    }}
+                  >
+                    <p>{server}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           </div>
           <div style={styles.sectionTitle}>Path</div>
           <div style={styles.card}>
@@ -137,7 +142,7 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
                       })
                     }
                   >
-                    {copied ? "Copied" : "Copy"}
+                    {copied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
               </>
@@ -154,25 +159,21 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
 function copyToClipboard(text: string, ns: NS, onCopied?: () => void): void {
   const nav = navigator as Navigator | undefined;
   if (!nav?.clipboard?.writeText) {
-    ns.tprint("WARN clipboard API not available.");
+    ns.tprint('WARN clipboard API not available.');
     return;
   }
   nav.clipboard
     .writeText(text)
     .then(() => {
-      ns.tprint("INFO copied path to clipboard.");
+      ns.tprint('INFO copied path to clipboard.');
       onCopied?.();
     })
     .catch(() => {
-      ns.tprint("WARN failed to copy to clipboard.");
+      ns.tprint('WARN failed to copy to clipboard.');
     });
 }
 
-function findShortestPath(
-  adj: Map<string, Set<string>>,
-  start: string,
-  target: string
-): string[] {
+function findShortestPath(adj: Map<string, Set<string>>, start: string, target: string): string[] {
   if (start === target) return [start];
   const queue: string[] = [start];
   const visited = new Set<string>([start]);
@@ -200,9 +201,9 @@ function findShortestPath(
 }
 
 function printHelp(ns: NS): void {
-  ns.tprint("Usage: run agent/connect-control.js");
-  ns.tprint("Examples:");
-  ns.tprint("  run agent/server-control.js");
+  ns.tprint('Usage: run agent/connect-control.js');
+  ns.tprint('Examples:');
+  ns.tprint('  run agent/server-control.js');
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -213,45 +214,45 @@ const styles: Record<string, React.CSSProperties> = {
   },
   card: {
     border: `1px solid ${colors.accentBorder}`,
-    borderRadius: "6px",
+    borderRadius: '6px',
     padding: spacing.md,
     marginBottom: spacing.md,
   },
   scrollArea: {
-    maxHeight: "220px",
-    overflowY: "auto",
+    maxHeight: '220px',
+    overflowY: 'auto',
   },
   rowWrap: {
-    width: "100%",
-    padding: "2px 4px",
-    borderRadius: "6px",
-    minHeight: "22px",
+    width: '100%',
+    padding: '2px 4px',
+    borderRadius: '6px',
+    minHeight: '22px',
   },
   rowWrapHover: {
-    background: "rgba(42, 50, 64, 0.45)",
+    background: 'rgba(42, 50, 64, 0.45)',
     border: `1px solid ${colors.accentBorder}`,
   },
   row: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: spacing.sm,
     gap: spacing.md,
-    width: "100%",
-    cursor: "pointer",
+    width: '100%',
+    cursor: 'pointer',
   },
   rowHover: {
-    background: "rgba(42, 50, 64, 0.35)",
+    background: 'rgba(42, 50, 64, 0.35)',
   },
   actions: {
-    display: "flex",
-    justifyContent: "flex-end",
+    display: 'flex',
+    justifyContent: 'flex-end',
     marginTop: spacing.sm,
   },
   mono: {
     fontFamily: font.family,
     fontSize: font.size,
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
   },
 };
