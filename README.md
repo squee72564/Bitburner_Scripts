@@ -70,6 +70,20 @@ pnpm run lint
 pnpm run lint:fix
 ```
 
+## Formatting
+
+```
+pnpm run format
+```
+
+```
+pnpm run format:check
+```
+
+## UI Scripts (React)
+
+This repo includes a lightweight UI toolkit for Bitburner scripts under `bitburner/ui/`. Use the React/DOM shim in `bitburner/ui/react.ts` to render floating panels or modals directly into the game UI.
+
 ## MCP Server
 
 The MCP server is implemented under `src/` and connects to Bitburner’s Remote API over WebSocket using MCP stdio transport.
