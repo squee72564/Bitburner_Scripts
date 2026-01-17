@@ -70,18 +70,12 @@ async function main() {
   fs.mkdirSync(targetDir, { recursive: true });
 
   const items = await fetchJson(BASE_API);
-  const nsFiles = items
-    .filter(
-      (item) =>
-        item.type === 'file' && item.name.startsWith('bitburner.ns') && item.name.endsWith('.md'),
-    )
+  const markdownFiles = items
+    .filter((item) => item.type === 'file' && item.name.endsWith('.md'))
     .map((item) => item.name);
 
-  if (!nsFiles.includes('bitburner.ns.md')) {
-    nsFiles.push('bitburner.ns.md');
-  }
-
-  for (const name of nsFiles) {
+  for (const [index, name] of markdownFiles.entries()) {
+    console.log(`Downloading ${index + 1}/${markdownFiles.length}: ${name}`);
     const text = await fetchText(`${RAW_BASE}/${name}`);
     fs.writeFileSync(path.join(targetDir, name), text, 'utf-8');
   }
@@ -100,7 +94,7 @@ async function main() {
     'utf-8',
   );
 
-  console.log(`Synced ${nsFiles.length} files.`);
+  console.log(`Synced ${markdownFiles.length} files.`);
 }
 
 main().catch((err) => {
