@@ -75,6 +75,8 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
   const { ns, onExit, adj } = props;
   const [pathStrings, setPathStrings] = React.useState<Array<string>>([]);
   const [currentTarget, setCurrentTarget] = React.useState<string | null>(null);
+  const [copied, setCopied] = React.useState<boolean>(false);
+  const [hoveredServer, setHoveredServer] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!currentTarget) {
@@ -98,11 +100,27 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
           <div style={styles.card}>
             <div style={styles.scrollArea}>
             {Array.from(adj.keys()).map((server) => (
-              <div key={server} style={styles.row} onClick={() => setCurrentTarget(server)}>
-                <p>{server}</p>
+              <div
+                key={server}
+                style={{
+                  ...styles.rowWrap,
+                  ...(hoveredServer === server ? styles.rowWrapHover : {}),
+                }}
+                onMouseEnter={() => setHoveredServer(server)}
+                onMouseLeave={() => setHoveredServer(null)}
+                onClick={() => setCurrentTarget(server)}
+              >
+                <div
+                  style={{
+                    ...styles.row,
+                    ...(hoveredServer === server ? styles.rowHover : {}),
+                  }}
+                >
+                  <p>{server}</p>
+                </div>
               </div>
             ))}
-            </div>
+          </div>
           </div>
           <div style={styles.sectionTitle}>Path</div>
           <div style={styles.card}>
@@ -112,9 +130,14 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
                 <div style={styles.actions}>
                   <Button
                     variant="outline"
-                    onClick={() => copyToClipboard(pathStrings[0], ns)}
+                    onClick={() =>
+                      copyToClipboard(pathStrings[0], ns, () => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1500);
+                      })
+                    }
                   >
-                    Copy
+                    {copied ? "Copied" : "Copy"}
                   </Button>
                 </div>
               </>
@@ -128,7 +151,7 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
   );
 }
 
-function copyToClipboard(text: string, ns: NS): void {
+function copyToClipboard(text: string, ns: NS, onCopied?: () => void): void {
   const nav = navigator as Navigator | undefined;
   if (!nav?.clipboard?.writeText) {
     ns.tprint("WARN clipboard API not available.");
@@ -138,6 +161,7 @@ function copyToClipboard(text: string, ns: NS): void {
     .writeText(text)
     .then(() => {
       ns.tprint("INFO copied path to clipboard.");
+      onCopied?.();
     })
     .catch(() => {
       ns.tprint("WARN failed to copy to clipboard.");
@@ -197,12 +221,27 @@ const styles: Record<string, React.CSSProperties> = {
     maxHeight: "220px",
     overflowY: "auto",
   },
+  rowWrap: {
+    width: "100%",
+    padding: "2px 4px",
+    borderRadius: "6px",
+    minHeight: "22px",
+  },
+  rowWrapHover: {
+    background: "rgba(42, 50, 64, 0.45)",
+    border: `1px solid ${colors.accentBorder}`,
+  },
   row: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: spacing.sm,
     gap: spacing.md,
+    width: "100%",
+    cursor: "pointer",
+  },
+  rowHover: {
+    background: "rgba(42, 50, 64, 0.35)",
   },
   actions: {
     display: "flex",
