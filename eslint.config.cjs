@@ -39,7 +39,7 @@ module.exports = [
   },
   {
     rules: {
-      ...require('eslint-config-prettier'),
+      ...require('eslint-config-prettier').rules,
     },
   },
   {
