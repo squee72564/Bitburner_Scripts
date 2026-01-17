@@ -1,0 +1,5 @@
+docs/
+*.md
+*.json
+pnpm-lock.yaml
+eslint.config.cjs

@@ -30,7 +30,7 @@ export class Logger {
     this.log("error", message, meta, true);
   }
 
-  private log(level: LogLevel, message: string, meta?: Record<string, unknown>, isError = false): void {
+  private log(level: LogLevel, message: string, meta?: Record<string, unknown>, _isError = false): void {
     if (levelRank[level] < levelRank[this.level]) return;
     const payload = {
       level,

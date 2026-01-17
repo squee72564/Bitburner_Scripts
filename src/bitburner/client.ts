@@ -145,7 +145,7 @@ export class BitburnerClient {
     let message: JsonRpcResponse;
     try {
       message = JSON.parse(payload) as JsonRpcResponse;
-    } catch (err) {
+  } catch (_err) {
       this.logger.warn("Invalid JSON-RPC message", { payload });
       return;
     }

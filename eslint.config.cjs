@@ -2,6 +2,7 @@ const js = require('@eslint/js');
 const tseslint = require('@typescript-eslint/eslint-plugin');
 const tsParser = require('@typescript-eslint/parser');
 const globals = require('globals');
+const prettier = require('eslint-plugin-prettier');
 
 module.exports = [
   {
@@ -24,18 +25,35 @@ module.exports = [
     },
     plugins: {
       '@typescript-eslint': tseslint,
+      prettier,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      'prettier/prettier': 'warn',
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
     },
   },
   {
+    rules: {
+      ...require('eslint-config-prettier'),
+    },
+  },
+  {
     files: ['src/**/*.ts', 'build/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.es2021,
+        NodeJS: 'readonly',
+      },
+    },
+  },
+  {
+    files: ['scripts/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node,

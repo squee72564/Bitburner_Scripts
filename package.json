@@ -18,6 +18,8 @@
     "typecheck:bb": "tsc -p tsconfig.bitburner.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "docs:refresh": "node scripts/refresh-bitburner-docs.js"
   },
   "keywords": [],
@@ -36,8 +38,11 @@
     "chokidar": "^3.6.0",
     "concurrently": "^7.6.0",
     "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
     "fast-glob": "^3.3.3",
     "globals": "^17.0.0",
+    "prettier": "^3.8.0",
     "sync-directory": "^5.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
