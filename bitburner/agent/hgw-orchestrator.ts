@@ -20,12 +20,29 @@ interface RunnerInfo {
 interface TargetInfo {
   host: string;
   score: number;
+  desiredThreads: number;
+  details?: DesiredThreadsDetails;
 }
 
 interface Assignment {
   runner: string;
   target: string;
   threads: number;
+}
+
+interface DesiredThreadsDetails {
+  weakenThreads: number;
+  growThreads: number;
+  growWeakenThreads: number;
+  hackThreads: number;
+  hackWeakenThreads: number;
+  maxMoney: number;
+  money: number;
+  minSec: number;
+  sec: number;
+  hackTime: number;
+  growTime: number;
+  weakenTime: number;
 }
 
 const HGW_SCRIPT = '/agent/hgw-loop.js';
@@ -90,6 +107,75 @@ function scoreTarget(ns: NS, host: string, mode: string): number {
     default:
       return (maxMoney * hackChance) / hackTime;
   }
+}
+
+function computeDesiredThreadsDetails(
+  ns: NS,
+  host: string,
+  moneyThreshold: number,
+  hackFraction: number,
+  securityEpsilon: number,
+): DesiredThreadsDetails {
+  const maxMoney = ns.getServerMaxMoney(host);
+  const money = ns.getServerMoneyAvailable(host);
+  const minSec = ns.getServerMinSecurityLevel(host);
+  const sec = ns.getServerSecurityLevel(host);
+  const hackTime = ns.getHackTime(host);
+  const growTime = ns.getGrowTime(host);
+  const weakenTime = ns.getWeakenTime(host);
+  const weakenPerThread = ns.weakenAnalyze(1);
+
+  const needWeaken = Math.max(0, sec - (minSec + securityEpsilon));
+  const weakenThreads = weakenPerThread > 0 ? Math.ceil(needWeaken / weakenPerThread) : 0;
+
+  let growThreads = 0;
+  let growWeakenThreads = 0;
+  if (maxMoney > 0) {
+    const growMultiplier = maxMoney / Math.max(money, 1);
+    if (money < maxMoney * moneyThreshold && growMultiplier > 1) {
+      growThreads = Math.ceil(ns.growthAnalyze(host, growMultiplier));
+      const growSec = ns.growthAnalyzeSecurity(growThreads, host);
+      growWeakenThreads = weakenPerThread > 0 ? Math.ceil(growSec / weakenPerThread) : 0;
+    }
+  }
+
+  let hackThreads = 0;
+  let hackWeakenThreads = 0;
+  if (maxMoney > 0) {
+    const desiredHack = maxMoney * hackFraction;
+    hackThreads = Math.ceil(ns.hackAnalyzeThreads(host, desiredHack));
+    if (!Number.isFinite(hackThreads) || hackThreads < 0) {
+      hackThreads = 0;
+    }
+    const hackSec = ns.hackAnalyzeSecurity(hackThreads, host);
+    hackWeakenThreads = weakenPerThread > 0 ? Math.ceil(hackSec / weakenPerThread) : 0;
+  }
+
+  return {
+    weakenThreads,
+    growThreads,
+    growWeakenThreads,
+    hackThreads,
+    hackWeakenThreads,
+    maxMoney,
+    money,
+    minSec,
+    sec,
+    hackTime,
+    growTime,
+    weakenTime,
+  };
+}
+
+function computeDesiredThreads(details: DesiredThreadsDetails): number {
+  return Math.max(
+    1,
+    details.weakenThreads,
+    details.growThreads,
+    details.growWeakenThreads,
+    details.hackThreads,
+    details.hackWeakenThreads,
+  );
 }
 
 function collectServers(ns: NS): string[] {
@@ -192,59 +278,37 @@ function getTargets(ns: NS, debug: boolean): { targets: string[]; reasons: strin
   return { targets, reasons };
 }
 
-function pickRunner(runners: RunnerInfo[]): RunnerInfo | null {
-  const sorted = runners.sort((a, b) => b.remaining - a.remaining);
-  const runner = sorted[0];
-  return runner && runner.remaining > 0 ? runner : null;
+function pickBestFitRunner(runners: RunnerInfo[], needed: number): RunnerInfo | null {
+  const candidates = runners
+    .filter((runner) => runner.remaining >= needed)
+    .sort((a, b) => a.remaining - b.remaining);
+
+  if (candidates.length > 0) {
+    return candidates[0];
+  }
+
+  const fallback = runners.sort((a, b) => b.remaining - a.remaining)[0];
+  return fallback && fallback.remaining > 0 ? fallback : null;
 }
 
-function buildAssignments(
-  runners: RunnerInfo[],
-  targets: TargetInfo[],
-  totalThreads: number,
-): Assignment[] {
+function buildAssignments(runners: RunnerInfo[], targets: TargetInfo[]): Assignment[] {
   const assignments: Assignment[] = [];
-  const assignmentByTarget = new Map<string, Assignment>();
   const runnerMap = new Map(runners.map((runner) => [runner.host, runner]));
 
-  const coverageCount = Math.min(targets.length, totalThreads);
-  for (let i = 0; i < coverageCount; i += 1) {
-    const runner = pickRunner(runners);
+  for (const target of targets) {
+    const runner = pickBestFitRunner(runners, target.desiredThreads);
     if (!runner) {
-      break;
+      continue;
     }
-    const target = targets[i];
-    const assignment = { runner: runner.host, target: target.host, threads: 1 };
-    assignments.push(assignment);
-    assignmentByTarget.set(target.host, assignment);
-    runner.remaining -= 1;
-  }
 
-  let remaining = runners.reduce((sum, runner) => sum + runner.remaining, 0);
-  if (remaining <= 0) {
-    return assignments;
-  }
-
-  let progressed = true;
-  while (remaining > 0 && progressed) {
-    progressed = false;
-    for (const target of targets) {
-      const assignment = assignmentByTarget.get(target.host);
-      if (!assignment) {
-        continue;
-      }
-      const runner = runnerMap.get(assignment.runner);
-      if (!runner || runner.remaining <= 0) {
-        continue;
-      }
-      assignment.threads += 1;
-      runner.remaining -= 1;
-      remaining -= 1;
-      progressed = true;
-      if (remaining <= 0) {
-        break;
-      }
+    const threads = Math.min(target.desiredThreads, runner.remaining);
+    if (threads <= 0) {
+      continue;
     }
+
+    assignments.push({ runner: runner.host, target: target.host, threads });
+    runner.remaining -= threads;
+    runnerMap.set(runner.host, runner);
   }
 
   return assignments;
@@ -282,9 +346,13 @@ export async function main(ns: NS): Promise<void> {
       ns.tprint(`HGW script RAM: ${scriptRam}`);
       ns.tprint(`Runners found: ${runners.length}`);
       ns.tprint(`Targets found: ${targets.length}`);
+
+      ns.tprint(`Runner results ---------`);
       for (const reason of runnerResult.reasons) {
         ns.tprint(reason);
       }
+
+      ns.tprint(`Target results ---------`);
       for (const reason of targetResult.reasons) {
         ns.tprint(reason);
       }
@@ -297,8 +365,39 @@ export async function main(ns: NS): Promise<void> {
     }
 
     const scoredTargets: TargetInfo[] = targets
-      .map((host) => ({ host, score: scoreTarget(ns, host, opts.score) }))
+      .map((host) => {
+        const details = computeDesiredThreadsDetails(
+          ns,
+          host,
+          opts.moneyThreshold,
+          opts.hackFraction,
+          opts.securityEpsilon,
+        );
+        return {
+          host,
+          score: scoreTarget(ns, host, opts.score),
+          desiredThreads: computeDesiredThreads(details),
+          details,
+        };
+      })
       .sort((a, b) => b.score - a.score);
+
+    if (opts.debug) {
+      for (const target of scoredTargets) {
+        const details = target.details;
+        if (!details) {
+          continue;
+        }
+        ns.tprint(
+          `Target ${target.host}: desired=${target.desiredThreads} ` +
+            `(w:${details.weakenThreads} g:${details.growThreads}/gw:${details.growWeakenThreads} ` +
+            `h:${details.hackThreads}/hw:${details.hackWeakenThreads}) ` +
+            `money=${Math.round(details.money)}/${Math.round(details.maxMoney)} ` +
+            `sec=${details.sec.toFixed(2)}/${details.minSec.toFixed(2)} ` +
+            `time(h/g/w)=${Math.round(details.hackTime)}/${Math.round(details.growTime)}/${Math.round(details.weakenTime)}ms`,
+        );
+      }
+    }
 
     const totalThreads = runners.reduce((sum, runner) => sum + runner.capacity, 0);
 
@@ -309,7 +408,7 @@ export async function main(ns: NS): Promise<void> {
       );
     }
 
-    const assignments = buildAssignments(runners, scoredTargets, totalThreads);
+    const assignments = buildAssignments(runners, scoredTargets);
 
     if (opts.dryRun) {
       ns.tprint(`Dry run: ${assignments.length} assignments planned.`);
