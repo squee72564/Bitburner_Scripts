@@ -20,6 +20,9 @@
     "types": ["react", "react-dom"],
     "paths": {
       "/*": ["*"],
+      "/ui/*": ["ui/*"],
+      "/lib/*": ["lib/*"],
+      "/scripts/*": ["scripts/*"],
       "@ns": ["../NetscriptDefinitions.d.ts"],
       "@react": ["lib/react.ts"]
     }
