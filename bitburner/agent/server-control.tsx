@@ -6,6 +6,7 @@ import { Input } from '/ui/components/Input';
 import { Select } from '/ui/components/Select';
 import { FloatingPanel } from '/ui/components/FloatingPanel';
 import { ConfirmModal } from '/ui/components/ConfirmModal';
+import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
 import { colors, font, spacing } from '/ui/theme';
 
 type ServerControlProps = {
@@ -73,7 +74,6 @@ function ServerControl(props: ServerControlProps): JSX.Element {
   const [purchased, setPurchased] = React.useState<number>(ns.getPurchasedServers().length);
   const [prefixValue, setPrefixValue] = React.useState<string>(prefix);
   const [rows, setRows] = React.useState<ServerRow[]>([]);
-  const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
   const [confirm, setConfirm] = React.useState<ConfirmState>({ type: 'none' });
 
   const limit = ns.getPurchasedServerLimit();
@@ -92,6 +92,54 @@ function ServerControl(props: ServerControlProps): JSX.Element {
   const cost = ns.getPurchasedServerCost(selectedRam);
   const canAfford = Number.isFinite(cost) && cost <= money;
   const canBuyMore = purchased < limit;
+  const items: ExpandableItem[] = rows.map((row) => {
+    const canSell = row.scriptCount === 0;
+    return {
+      id: row.name,
+      header: (
+        <>
+          <div style={styles.name}>{row.name}</div>
+          <div style={styles.value}>
+            {ns.formatRam(row.usedRam)} / {ns.formatRam(row.maxRam)}
+          </div>
+          <div style={styles.value}>{row.scriptCount} scripts</div>
+        </>
+      ),
+      actions: (
+        <div style={styles.actionsInline}>
+          <Button
+            variant="outline"
+            onClick={() => setConfirm({ type: 'kill', host: row.name, count: row.scriptCount })}
+          >
+            Kill
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => setConfirm({ type: 'sell', host: row.name, ram: row.maxRam })}
+            disabled={!canSell}
+          >
+            Sell
+          </Button>
+        </div>
+      ),
+      content:
+        row.scripts.length === 0 ? (
+          <div style={styles.muted}>No running scripts.</div>
+        ) : (
+          <div>
+            {row.scripts.map((proc) => (
+              <div key={`${row.name}-${proc.pid}`} style={styles.scriptRow}>
+                <div style={styles.scriptName}>{proc.filename}</div>
+                <div style={styles.scriptMeta}>t={proc.threads}</div>
+                <div style={styles.scriptMeta}>
+                  args={proc.args.map((arg) => String(arg)).join(' ')}
+                </div>
+              </div>
+            ))}
+          </div>
+        ),
+    };
+  });
 
   const onBuy = () => {
     if (!canBuyMore) {
@@ -152,62 +200,7 @@ function ServerControl(props: ServerControlProps): JSX.Element {
           <div style={styles.sectionTitle}>Owned Servers</div>
           <div style={styles.list}>
             {rows.length === 0 && <div style={styles.muted}>No purchased servers.</div>}
-            {rows.map((row) => {
-              const isExpanded = Boolean(expanded[row.name]);
-              const canSell = row.scriptCount === 0;
-              return (
-                <div key={row.name} style={styles.listItem}>
-                  <div style={styles.row}>
-                    <button
-                      style={styles.expand}
-                      onClick={() => setExpanded({ ...expanded, [row.name]: !isExpanded })}
-                    >
-                      {isExpanded ? '▼' : '▶'}
-                    </button>
-                    <div style={styles.name}>{row.name}</div>
-                    <div style={styles.value}>
-                      {ns.formatRam(row.usedRam)} / {ns.formatRam(row.maxRam)}
-                    </div>
-                    <div style={styles.value}>{row.scriptCount} scripts</div>
-                    <div style={styles.actionsInline}>
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          setConfirm({ type: 'kill', host: row.name, count: row.scriptCount })
-                        }
-                      >
-                        Kill
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={() =>
-                          setConfirm({ type: 'sell', host: row.name, ram: row.maxRam })
-                        }
-                        disabled={!canSell}
-                      >
-                        Sell
-                      </Button>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div style={styles.expandPanel}>
-                      {row.scripts.length === 0 && (
-                        <div style={styles.muted}>No running scripts.</div>
-                      )}
-                      {row.scripts.map((proc) => (
-                        <div key={`${row.name}-${proc.pid}`} style={styles.scriptRow}>
-                          <div style={styles.scriptName}>{proc.filename}</div>
-                          <div style={styles.scriptMeta}>t={proc.threads}</div>
-                          <div style={styles.scriptMeta}>
-                            args={proc.args.map((arg) => String(arg)).join(' ')}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {rows.length > 0 && <ExpandableList items={items} />}
           </div>
           <div style={styles.footer}>
             <div style={styles.muted}>
