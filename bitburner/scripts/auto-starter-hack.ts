@@ -5,11 +5,22 @@ const SCRIPT = 'scripts/starter-hack.js';
 
 export async function main(ns: NS): Promise<void> {
   ns.disableLog('scan');
+  const flags = ns.flags([
+    ['home', false],
+    ['home-runner', false],
+    ['help', false],
+    ['h', false],
+  ]);
+  if (flags.help || flags.h) {
+    ns.tprint('Usage: run scripts/auto-starter-hack.js [--home-runner]');
+    return;
+  }
+  const allowHomeRunner = Boolean(flags['home-runner'] || flags.home);
   const servers = getAllServers(ns);
 
   const purchased = new Set(ns.getPurchasedServers());
   const ramPerThread = ns.getScriptRam(SCRIPT, 'home');
-  const runners = getRunnerTiers(ns, servers, purchased, ramPerThread);
+  const runners = getRunnerTiers(ns, servers, purchased, ramPerThread, allowHomeRunner);
   const targets = servers.filter((host) => {
     if (host === 'home') {
       return false;
@@ -83,6 +94,7 @@ function getRunnerTiers(
   servers: string[],
   purchased: Set<string>,
   ramPerThread: number,
+  allowHomeRunner: boolean,
 ): { tierA: string[]; tierB: string[]; tierC: string[] } {
   const tierA = servers.filter((host) => {
     if (host === 'home') return false;
@@ -100,7 +112,9 @@ function getRunnerTiers(
   });
 
   const tierC =
-    ns.hasRootAccess('home') && ns.getServerMaxRam('home') >= ramPerThread ? ['home'] : [];
+    allowHomeRunner && ns.hasRootAccess('home') && ns.getServerMaxRam('home') >= ramPerThread
+      ? ['home']
+      : [];
 
   return { tierA, tierB, tierC };
 }
