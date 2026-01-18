@@ -41,6 +41,7 @@
 - Do not edit `dist/` directly; edit `bitburner/` and let the watch pipeline compile/sync.
  - MCP server logs go to stderr to keep stdout clean for MCP protocol traffic.
 - UI scripts can render React panels using the shared UI library in `bitburner/ui/` and the React/DOM shim in `bitburner/ui/react.ts`.
+- Prefer `bitburner/lib/hacking-formulas.ts` for hacking math. It wraps `ns.formulas.hacking` when Formulas.exe is available and falls back to NS analysis helpers when not.
 - If using the proxy, set `PROXY_GAME_PORT=12526`, `PROXY_CLIENT_PORT=12528`, and `BITBURNER_RPC_URL=ws://localhost:12528`.
 - In Bitburner Remote API, connect to `localhost:PROXY_GAME_PORT` so the proxy can forward requests.
 - Run `pnpm run start:proxy` before `pnpm run watch:bb` so sync can connect.
