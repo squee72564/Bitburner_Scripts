@@ -1,4 +1,4 @@
-import { NS } from '@ns';
+import { AutocompleteData, NS } from '@ns';
 import { ServerDfs } from 'lib/dfs';
 import { isHome } from 'lib/host';
 
@@ -15,6 +15,14 @@ const PORT_OPENERS: Array<{
 
 export async function main(ns: NS): Promise<void> {
   ns.disableLog('scan');
+  const flags = ns.flags([
+    ['help', false],
+    ['h', false],
+  ]);
+  if (flags.help || flags.h) {
+    ns.tprint('Usage: run agent/root-all.js');
+    return;
+  }
   const availableOpeners = getAvailablePortOpeners(ns);
 
   const dfs = new ServerDfs(ns, {
@@ -37,6 +45,14 @@ export async function main(ns: NS): Promise<void> {
   });
 
   dfs.traverse();
+}
+
+export function autocomplete(data: AutocompleteData): string[] {
+  data.flags([
+    ['help', false],
+    ['h', false],
+  ]);
+  return [];
 }
 
 function getAvailablePortOpeners(ns: NS): Array<(ns: NS, host: string) => void> {
