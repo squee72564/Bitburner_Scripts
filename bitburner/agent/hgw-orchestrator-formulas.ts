@@ -8,6 +8,8 @@ import {
   growTime as formulaGrowTime,
   weakenTime as formulaWeakenTime,
 } from 'lib/hacking-formulas';
+import { React } from '/ui/react';
+import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
 
 interface OrchestratorOptions {
   score: string;
@@ -39,6 +41,13 @@ interface Assignment {
   threads: number;
 }
 
+interface LaunchResult {
+  runner: string;
+  target: string;
+  threads: number;
+  pid: number;
+}
+
 interface DesiredThreadsDetails {
   weakenThreads: number;
   growThreads: number;
@@ -56,7 +65,13 @@ interface DesiredThreadsDetails {
 
 const HGW_SCRIPT = '/agent/hgw-loop-formulas.js';
 const HGW_DEPENDENCIES = ['/lib/hacking-formulas.js'];
-const SCORE_MODES = ['money', 'moneyTime', 'prepAware', 'growthWeighted', 'moneyChanceTime'] as const;
+const SCORE_MODES = [
+  'money',
+  'moneyTime',
+  'prepAware',
+  'growthWeighted',
+  'moneyChanceTime',
+] as const;
 const HOME_RAM_RESERVE = 32;
 
 export function autocomplete(data: AutocompleteData, args: string[]): string[] {
@@ -375,6 +390,172 @@ function buildAssignments(runners: RunnerInfo[], targets: TargetInfo[]): Assignm
   return assignments;
 }
 
+function renderDebugUi(
+  ns: NS,
+  data: {
+    scriptRam: number;
+    runners: RunnerInfo[];
+    targets: string[];
+    runnerReasons: string[];
+    targetReasons: string[];
+    scoredTargets: TargetInfo[];
+    assignments: Assignment[];
+    launchResults?: LaunchResult[];
+    dryRun: boolean;
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
+  const el = React.createElement;
+  const items: ExpandableItem[] = [];
+
+  if (data.runnerReasons.length > 0) {
+    items.push({
+      id: 'runner-reasons',
+      header: el(
+        'span',
+        null,
+        'Runner skips ',
+        el('strong', null, `(${ns.formatNumber(data.runnerReasons.length)})`),
+      ),
+      content: el(
+        'div',
+        null,
+        data.runnerReasons.map((reason) => el('div', { key: reason }, reason)),
+      ),
+    });
+  }
+
+  if (data.targetReasons.length > 0) {
+    items.push({
+      id: 'target-reasons',
+      header: el(
+        'span',
+        null,
+        'Target skips ',
+        el('strong', null, `(${ns.formatNumber(data.targetReasons.length)})`),
+      ),
+      content: el(
+        'div',
+        null,
+        data.targetReasons.map((reason) => el('div', { key: reason }, reason)),
+      ),
+    });
+  }
+
+  if (data.scoredTargets.length > 0) {
+    items.push({
+      id: 'targets',
+      header: el(
+        'span',
+        null,
+        'Targets ',
+        el('strong', null, `(${ns.formatNumber(data.scoredTargets.length)})`),
+      ),
+      content: el(
+        'div',
+        { style: { display: 'flex', flexDirection: 'column', gap: '6px' } },
+        data.scoredTargets.map((target) => {
+          const details = target.details;
+          if (!details) {
+            return el('div', { key: target.host }, target.host);
+          }
+          const moneyRatio = details.maxMoney > 0 ? details.money / details.maxMoney : 0;
+          return el(
+            'div',
+            {
+              key: target.host,
+              style: { borderBottom: '1px solid #2a2f3a', paddingBottom: '6px' },
+            },
+            el(
+              'div',
+              null,
+              el('strong', null, target.host),
+              ` · desired ${ns.formatNumber(target.desiredThreads)}`,
+            ),
+            el(
+              'div',
+              null,
+              `w:${ns.formatNumber(details.weakenThreads)} g:${ns.formatNumber(details.growThreads)}` +
+                `/gw:${ns.formatNumber(details.growWeakenThreads)} h:${ns.formatNumber(details.hackThreads)}` +
+                `/hw:${ns.formatNumber(details.hackWeakenThreads)}`,
+            ),
+            el(
+              'div',
+              null,
+              `money ${ns.formatNumber(details.money)}/${ns.formatNumber(details.maxMoney)} ` +
+                `(${ns.formatPercent(moneyRatio)}) · sec ${details.sec.toFixed(2)}/${details.minSec.toFixed(2)}`,
+            ),
+            el(
+              'div',
+              null,
+              `time h/g/w ${ns.tFormat(details.hackTime)}/${ns.tFormat(details.growTime)}/${ns.tFormat(details.weakenTime)}`,
+            ),
+          );
+        }),
+      ),
+    });
+  }
+
+  if (data.assignments.length > 0) {
+    items.push({
+      id: 'run-info',
+      header: el(
+        'span',
+        null,
+        data.dryRun ? 'Dry run plans ' : 'Run assignments ',
+        el('strong', null, `(${ns.formatNumber(data.assignments.length)})`),
+      ),
+      content: el(
+        'div',
+        null,
+        data.assignments.map((assignment) =>
+          el(
+            'div',
+            { key: `${assignment.runner}-${assignment.target}` },
+            `${assignment.runner} → ${assignment.target} (${ns.formatNumber(assignment.threads)} threads)`,
+          ),
+        ),
+      ),
+    });
+  }
+
+  if (data.launchResults && data.launchResults.length > 0) {
+    items.push({
+      id: 'launch-results',
+      header: el(
+        'span',
+        null,
+        'Launch results ',
+        el('strong', null, `(${ns.formatNumber(data.launchResults.length)})`),
+      ),
+      content: el(
+        'div',
+        null,
+        data.launchResults.map((result) =>
+          el(
+            'div',
+            { key: `${result.runner}-${result.target}` },
+            `${result.runner} → ${result.target} (${ns.formatNumber(result.threads)} threads) ` +
+              (result.pid === 0 ? 'FAILED' : `pid ${result.pid}`),
+          ),
+        ),
+      ),
+    });
+  }
+
+  return el(
+    'div',
+    { style: { border: '1px solid #3a3f4b', borderRadius: '8px', padding: '10px' } },
+    el(
+      'div',
+      { style: { fontWeight: 600, marginBottom: '6px' } },
+      `HGW Orchestrator Debug · RAM ${ns.formatRam(data.scriptRam)} · runners ` +
+        `${ns.formatNumber(data.runners.length)} · targets ${ns.formatNumber(data.targets.length)}`,
+    ),
+    el(ExpandableList, { items, defaultExpandedIds: ['run-info', 'launch-results'] }),
+  );
+}
+
 function killRunnerScripts(ns: NS, runners: RunnerInfo[]): void {
   const currentHost = ns.getHostname();
   for (const runner of runners) {
@@ -394,7 +575,7 @@ export async function main(ns: NS): Promise<void> {
   const currentHost = ns.getHostname();
   const currentPid = ns.getRunningScript()?.pid;
   for (const process of ns.ps(currentHost)) {
-    if (process.filename === ns.getScriptName() && process.pid !== currentPid) {
+    if (process.filename === ns.getScriptName() && process.pid !== currentPid && !opts.dryRun) {
       ns.kill(process.pid);
     }
   }
@@ -410,22 +591,6 @@ export async function main(ns: NS): Promise<void> {
     const runners = runnerResult.runners.sort((a, b) => b.capacity - a.capacity);
     const targetResult = getTargets(ns, opts.debug);
     const targets = targetResult.targets;
-
-    if (opts.debug) {
-      ns.tprint(`HGW script RAM: ${ns.formatRam(scriptRam)}`);
-      ns.tprint(`Runners found: ${ns.formatNumber(runners.length)}`);
-      ns.tprint(`Targets found: ${ns.formatNumber(targets.length)}`);
-
-      ns.tprint(`Runner results ---------`);
-      for (const reason of runnerResult.reasons) {
-        ns.tprint(reason);
-      }
-
-      ns.tprint(`Target results ---------`);
-      for (const reason of targetResult.reasons) {
-        ns.tprint(reason);
-      }
-    }
 
     if (runners.length === 0 || targets.length === 0) {
       ns.tprint('No runners or targets available.');
@@ -451,27 +616,6 @@ export async function main(ns: NS): Promise<void> {
       })
       .sort((a, b) => b.score - a.score);
 
-    if (opts.debug) {
-      for (const target of scoredTargets) {
-        const details = target.details;
-        if (!details) {
-          continue;
-        }
-        const moneyRatio = details.maxMoney > 0 ? details.money / details.maxMoney : 0;
-        ns.tprint(
-          `Target ${target.host}: desired=${ns.formatNumber(target.desiredThreads)} ` +
-            `(w:${ns.formatNumber(details.weakenThreads)} g:${ns.formatNumber(details.growThreads)}` +
-            `/gw:${ns.formatNumber(details.growWeakenThreads)} h:${ns.formatNumber(details.hackThreads)}` +
-            `/hw:${ns.formatNumber(details.hackWeakenThreads)}) ` +
-            `money=${ns.formatNumber(details.money)}/${ns.formatNumber(details.maxMoney)} ` +
-            `(${ns.formatPercent(moneyRatio)}) ` +
-            `sec=${details.sec.toFixed(2)}/${details.minSec.toFixed(2)} ` +
-            `time(h/g/w)=${ns.tFormat(details.hackTime)}/${ns.tFormat(details.growTime)}/` +
-            `${ns.tFormat(details.weakenTime)}`,
-        );
-      }
-    }
-
     const totalThreads = runners.reduce((sum, runner) => sum + runner.capacity, 0);
 
     if (totalThreads < scoredTargets.length) {
@@ -483,14 +627,20 @@ export async function main(ns: NS): Promise<void> {
 
     const assignments = buildAssignments(runners, scoredTargets);
 
+    ns.tprintRaw(
+      renderDebugUi(ns, {
+        scriptRam,
+        runners,
+        targets,
+        runnerReasons: runnerResult.reasons,
+        targetReasons: targetResult.reasons,
+        scoredTargets,
+        assignments,
+        dryRun: opts.dryRun,
+      }),
+    );
+
     if (opts.dryRun) {
-      ns.tprint(`Dry run: ${ns.formatNumber(assignments.length)} assignments planned.`);
-      for (const assignment of assignments) {
-        ns.tprint(
-          `Plan: ${assignment.runner} -> ${assignment.target} ` +
-            `(${ns.formatNumber(assignment.threads)} threads)`,
-        );
-      }
       return;
     } else {
       killRunnerScripts(ns, runners);
@@ -500,6 +650,7 @@ export async function main(ns: NS): Promise<void> {
         await ns.scp([HGW_SCRIPT, ...HGW_DEPENDENCIES], runner, 'home');
       }
 
+      const launchResults: LaunchResult[] = [];
       for (const assignment of assignments) {
         const { runner, target } = assignment;
         const pid = ns.exec(
@@ -514,12 +665,22 @@ export async function main(ns: NS): Promise<void> {
           '--epsilon',
           String(opts.securityEpsilon),
         );
-        if (pid === 0) {
-          ns.tprint(`Failed to launch HGW loop on ${runner} targeting ${target}.`);
-        } else {
-          ns.tprint(`Launched HGW loop on ${runner} -> ${target} (${assignment.threads} threads)`);
-        }
+        launchResults.push({ runner, target, threads: assignment.threads, pid });
       }
+
+      ns.tprintRaw(
+        renderDebugUi(ns, {
+          scriptRam,
+          runners,
+          targets,
+          runnerReasons: runnerResult.reasons,
+          targetReasons: targetResult.reasons,
+          scoredTargets,
+          assignments,
+          launchResults,
+          dryRun: opts.dryRun,
+        }),
+      );
     }
 
     await ns.sleep(opts.rebalanceMs);
