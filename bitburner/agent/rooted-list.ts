@@ -81,16 +81,15 @@ export async function main(ns: NS): Promise<void> {
           el(
             'div',
             { key: entry.host },
-            debug
-              ? `${entry.host}: required ${entry.required}, player ${playerHack}`
-              : entry.host,
+            debug ? `${entry.host}: required ${entry.required}, player ${playerHack}` : entry.host,
           ),
         ),
       ),
     },
   ];
 
-  ns.tprintRaw(el(ExpandableList, { items }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ns.tprintRaw(el(ExpandableList, { items }) as any);
 }
 
 function printHelp(ns: NS): void {
