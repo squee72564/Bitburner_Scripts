@@ -45,13 +45,15 @@ function estimateGrowthMultiplier(ns: NS, host: string, threads: number, cores =
 }
 
 function growAmountFallback(ns: NS, server: Server, threads: number, cores = 1): number {
+  const moneyAvailable = server.moneyAvailable ?? 0;
+  const moneyMax = server.moneyMax ?? 0;
   if (!Number.isFinite(threads) || threads <= 0) {
-    return server.moneyAvailable;
+    return moneyAvailable;
   }
 
   const multiplier = estimateGrowthMultiplier(ns, server.hostname, threads, cores);
-  const moneyAfterAdd = server.moneyAvailable + threads;
-  return Math.min(server.moneyMax, moneyAfterAdd * multiplier);
+  const moneyAfterAdd = moneyAvailable + threads;
+  return Math.min(moneyMax, moneyAfterAdd * multiplier);
 }
 
 export function growAmount(
@@ -94,13 +96,15 @@ export function growThreads(
     return ns.formulas.hacking.growThreads(server, player, targetMoney, cores);
   }
 
-  const desiredMoney = Math.min(targetMoney, server.moneyMax);
-  if (!Number.isFinite(desiredMoney) || desiredMoney <= server.moneyAvailable) {
+  const moneyAvailable = server.moneyAvailable ?? 0;
+  const moneyMax = server.moneyMax ?? 0;
+  const desiredMoney = Math.min(targetMoney, moneyMax);
+  if (!Number.isFinite(desiredMoney) || desiredMoney <= moneyAvailable) {
     return 0;
   }
 
   const coresValue = cores ?? 1;
-  const multiplier = desiredMoney / Math.max(server.moneyAvailable, 1);
+  const multiplier = desiredMoney / Math.max(moneyAvailable, 1);
   let high = Math.ceil(ns.growthAnalyze(server.hostname, multiplier, coresValue));
   if (!Number.isFinite(high) || high < 1) {
     high = 1;
