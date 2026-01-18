@@ -1,7 +1,7 @@
-# HGW Loop Model (Single Target, Single Controller)
+# HGW Loop Model (Single Target, Single Controller — Formulas-Aware)
 
 ## Prelude
-This document specifies a formal model and control strategy for an HGW (hack/grow/weaken) loop when a single script runs on one machine and targets exactly one other machine, with no overlapping scripts targeting the same host. The goal is to maximize money throughput while keeping target security low and money near maximum, within the RAM limits of the runner.
+This document specifies the current formulas-aware HGW (hack/grow/weaken) loop used by `hgw-loop-formulas`. It models a single script running on one machine that targets exactly one server. The goal is to keep security near minimum, money near max, and hack a controlled fraction when ready, all within the thread budget of the running script.
 
 ## Assumptions
 - The HGW loop script runs on one machine (the runner).
@@ -12,13 +12,13 @@ This document specifies a formal model and control strategy for an HGW (hack/gro
 - Root access to the target already exists.
 - Hack/grow/weaken calls are awaited (the loop is sequential).
 - Thread counts are integers and are limited by the script thread budget.
-- `BasicHGWOptions.threads` accepts non-integers, but we use integer threads for clarity.
 - Hacks are only attempted if `getHackingLevel() >= getServerRequiredHackingLevel(target)`.
+- Formulas are used for grow threads and hack percent when available (`Formulas.exe`), with fallbacks to analysis helpers.
 
 ## Summary of Approach
 We treat the target server as a controlled system whose money and security evolve only due to this script. The loop enforces two invariants: security near the minimum and money near the maximum. If security rises, we weaken. If money is low, we grow and then weaken to offset the security increase. If money is high and security is low, we hack a controlled fraction, then regrow and re-weaken. Thread counts are computed from the analysis functions and capped by the script thread budget (which is derived from runner RAM when the script is launched).
 
-## Script Interface (hgw-loop)
+## Script Interface (hgw-loop-formulas)
 The implementation accepts a positional target and optional flags:
 
 - `target` (positional): server hostname, default `n00dles`
@@ -26,7 +26,7 @@ The implementation accepts a positional target and optional flags:
 - `--hack <ratio>`: hack fraction (default `0.1`)
 - `--epsilon <value>`: security buffer (default `1`)
 
-## Formal Mathematical Model
+## Formal Mathematical Model (Current Implementation)
 
 ### State Variables
 Let the target be server `s`.
@@ -35,42 +35,26 @@ Let the target be server `s`.
 - Max money: `M_max = ns.getServerMaxMoney(s)`
 - Security: `S_t = ns.getServerSecurityLevel(s)`
 - Min security: `S_min = ns.getServerMinSecurityLevel(s)`
-- Base security: `S_base = ns.getServerBaseSecurityLevel(s)`
-- Growth parameter: `G = ns.getServerGrowth(s)`
 - Player hacking level: `H = ns.getHackingLevel()`
 - Required level: `H_req = ns.getServerRequiredHackingLevel(s)`
 
-### Thread Budget (Derived from RAM)
-Runner available RAM: `R_avail`
-
-HGW loop script RAM cost: `R_script = ns.getScriptRam("/agent/hgw-loop.js")`
-
-Script thread budget (set when launching the script):
+### Thread Budget (Runtime Script Threads)
+Thread budget comes from the running script’s assigned threads:
 
 ```
-T_budget = floor(R_avail / R_script)
+T_budget = floor(ns.getRunningScript().threads)
 ```
 
-BasicHGWOptions allow per-call thread usage:
+All computed thread counts are capped independently by `T_budget`.
+
+### Hack (Formulas Percent)
+Per-thread fraction: `p = hackPercent(ns, server, player)`
+
+Threads are computed from desired money amount:
 
 ```
-0 <= T_h, T_g, T_w <= T_budget
-```
-
-Operation RAM costs (for reference):
-- hack: `0.1` GB
-- grow: `0.15` GB
-- weaken: `0.15` GB
-
-### Hack
-- Fraction per thread: `p = ns.hackAnalyze(s)`
-- Success chance: `c = ns.hackAnalyzeChance(s)`
-- Threads: `T_h`
-
-Expected money stolen:
-
-```
-E[Delta M_h] = c * min(M_t, M_t * p * T_h)
+desiredHack = M_t * hackFraction
+T_h = ceil(desiredHack / (M_t * p))   if p > 0
 ```
 
 Security increase:
@@ -79,13 +63,11 @@ Security increase:
 Delta S_h = ns.hackAnalyzeSecurity(T_h, s)
 ```
 
-### Grow
-Choose target multiplier `m = M_target / M_t`.
-
-Threads:
+### Grow (Formulas Threads)
+Grow threads are computed directly from target money:
 
 ```
-T_g = ceil(ns.growthAnalyze(s, m))
+T_g = growThreads(ns, server, player, M_max)
 ```
 
 Security increase:
@@ -95,22 +77,18 @@ Delta S_g = ns.growthAnalyzeSecurity(T_g, s)
 ```
 
 ### Weaken
-Required threads to offset security deltas:
+Weaken is computed from the current delta (or per-operation delta), and capped independently:
 
 ```
-T_w = ceil((Delta S_h + Delta S_g + (S_t - S_min)) / ns.weakenAnalyze(1))
+T_w = ceil((S_t - S_min) / ns.weakenAnalyze(1))
 ```
+
+For grow/hack follow-ups, weaken threads are computed from the security increase of that operation only.
 
 ### Timing
-Operation durations (milliseconds):
+The loop does not use timing functions in its logic.
 
-- Hack time: `t_h = ns.getHackTime(s)`
-- Grow time: `t_g = ns.getGrowTime(s)`
-- Weaken time: `t_w = ns.getWeakenTime(s)`
-
-Note: times depend on current security at call time.
-
-## Pseudocode
+## Pseudocode (Current Behavior)
 
 ```pseudo
 function hgwLoop(target, threadBudget):
@@ -129,11 +107,10 @@ function hgwLoop(target, threadBudget):
 
     // 2) Money control
     if M < Mmax * MONEY_THRESHOLD:
-      multiplier = Mmax / max(M, 1)
-      Tg = ceil(growthAnalyze(target, multiplier))
+      Tg = ceil(growThreads(server, player, Mmax))
       Sw = growthAnalyzeSecurity(Tg)
       Tw = ceil(Sw / weakenAnalyze(1))
-      (Tg, Tw) = scaleToBudget({Tg, Tw}, threadBudget)
+      (Tg, Tw) = capThreads(Tg), capThreads(Tw)
       await grow(target, threads=Tg)
       await weaken(target, threads=Tw)
       continue
@@ -144,35 +121,29 @@ function hgwLoop(target, threadBudget):
       continue
     hackFraction = TARGET_HACK_FRACTION
     desiredHackAmount = M * hackFraction
-    Th = ceil(hackAnalyzeThreads(target, desiredHackAmount))
-    Th = capThreads(Th, threadBudget)
+    p = hackPercent(server, player)
+    Th = ceil(desiredHackAmount / (M * p))
+    Th = capThreads(Th)
 
     Sh = hackAnalyzeSecurity(Th, target)
     Tw = ceil(Sh / weakenAnalyze(1))
     (Th, Tw) = scaleToBudget({Th, Tw}, threadBudget)
     await hack(target, threads=Th)
 
-    // Restore money + security
+    // Restore money + security (only if below max)
     M_after = getServerMoneyAvailable(target)
-    multiplier = Mmax / max(M_after, 1)
-    Tg = ceil(growthAnalyze(target, multiplier))
-    Sg = growthAnalyzeSecurity(Tg)
-    Tw2 = ceil(Sg / weakenAnalyze(1))
-    (Tg, Tw2) = scaleToBudget({Tg, Tw2}, threadBudget)
-    await grow(target, threads=Tg)
-    await weaken(target, threads=Tw2)
+    if M_after < Mmax:
+      Tg = ceil(growThreads(server, player, Mmax))
+      Sg = growthAnalyzeSecurity(Tg)
+      Tw2 = ceil(Sg / weakenAnalyze(1))
+      (Tg, Tw2) = capThreads(Tg), capThreads(Tw2)
+      await grow(target, threads=Tg)
+      await weaken(target, threads=Tw2)
 ```
 
-Utility helpers referenced:
+Utility helper referenced:
 
 ```pseudo
 function capThreads(T, threadBudget):
-  return min(T, threadBudget)
-
-function scaleToBudget(threadMap, threadBudget):
-  total = sum(threadMap[i])
-  if total <= threadBudget:
-    return threadMap
-  alpha = threadBudget / total
-  return { floor(alpha * threadMap[i]) for each i }
+  return min(ceil(T), threadBudget)
 ```
