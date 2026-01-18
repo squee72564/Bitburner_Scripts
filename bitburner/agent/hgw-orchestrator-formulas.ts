@@ -15,6 +15,7 @@ interface OrchestratorOptions {
   moneyThreshold: number;
   hackFraction: number;
   securityEpsilon: number;
+  includeHome: boolean;
   dryRun: boolean;
   debug: boolean;
 }
@@ -56,6 +57,7 @@ interface DesiredThreadsDetails {
 const HGW_SCRIPT = '/agent/hgw-loop-formulas.js';
 const HGW_DEPENDENCIES = ['/lib/hacking-formulas.js'];
 const SCORE_MODES = ['money', 'moneyTime', 'prepAware', 'growthWeighted', 'moneyChanceTime'] as const;
+const HOME_RAM_RESERVE = 32;
 
 export function autocomplete(data: AutocompleteData, args: string[]): string[] {
   data.flags([
@@ -64,6 +66,7 @@ export function autocomplete(data: AutocompleteData, args: string[]): string[] {
     ['money', 0.9],
     ['hack', 0.1],
     ['epsilon', 1],
+    ['include-home', false],
     ['dry', false],
     ['debug', false],
     ['help', false],
@@ -88,6 +91,7 @@ function parseOptions(ns: NS): OrchestratorOptions | null {
     ['money', 0.9],
     ['hack', 0.1],
     ['epsilon', 1],
+    ['include-home', false],
     ['dry', false],
     ['debug', false],
     ['help', false],
@@ -95,7 +99,7 @@ function parseOptions(ns: NS): OrchestratorOptions | null {
 
   if (flags.help) {
     ns.tprint(
-      'Usage: run hgw-orchestrator-formulas.js [--score name] [--rebalance ms] [--money 0.9] [--hack 0.1] [--epsilon 1] [--dry] [--debug]',
+      'Usage: run hgw-orchestrator-formulas.js [--score name] [--rebalance ms] [--money 0.9] [--hack 0.1] [--epsilon 1] [--include-home] [--dry] [--debug]',
     );
     return null;
   }
@@ -105,10 +109,20 @@ function parseOptions(ns: NS): OrchestratorOptions | null {
   const moneyThreshold = Math.min(1, Math.max(0, Number(flags.money)));
   const hackFraction = Math.min(1, Math.max(0, Number(flags.hack)));
   const securityEpsilon = Math.max(0, Number(flags.epsilon));
+  const includeHome = Boolean(flags['include-home']);
   const dryRun = Boolean(flags.dry);
   const debug = Boolean(flags.debug);
 
-  return { score, rebalanceMs, moneyThreshold, hackFraction, securityEpsilon, dryRun, debug };
+  return {
+    score,
+    rebalanceMs,
+    moneyThreshold,
+    hackFraction,
+    securityEpsilon,
+    includeHome,
+    dryRun,
+    debug,
+  };
 }
 
 function scoreTarget(ns: NS, host: string, mode: string): number {
@@ -233,6 +247,7 @@ function getRunners(
   ns: NS,
   scriptRam: number,
   debug: boolean,
+  includeHome: boolean,
 ): { runners: RunnerInfo[]; reasons: string[] } {
   const networkServers: string[] = collectServers(ns);
   const purchased: Set<string> = new Set(ns.getPurchasedServers());
@@ -241,7 +256,7 @@ function getRunners(
   const runners: RunnerInfo[] = [];
   const reasons: string[] = [];
   for (const host of allServers) {
-    if (host === 'home') {
+    if (host === 'home' && !includeHome) {
       if (debug) {
         reasons.push(`skip ${host}: home excluded`);
       }
@@ -261,10 +276,17 @@ function getRunners(
     }
 
     const maxRam = ns.getServerMaxRam(host);
-    const capacity = Math.floor(maxRam / scriptRam);
+    const reservableRam = host === 'home' ? Math.max(0, maxRam - HOME_RAM_RESERVE) : maxRam;
+    const capacity = Math.floor(reservableRam / scriptRam);
     if (capacity < 1) {
       if (debug) {
-        reasons.push(`skip ${host}: maxRam ${maxRam} < scriptRam ${scriptRam}`);
+        if (host === 'home') {
+          reasons.push(
+            `skip ${host}: reservableRam ${reservableRam} < scriptRam ${scriptRam} (reserve ${HOME_RAM_RESERVE})`,
+          );
+        } else {
+          reasons.push(`skip ${host}: maxRam ${maxRam} < scriptRam ${scriptRam}`);
+        }
       }
       continue;
     }
@@ -384,7 +406,7 @@ export async function main(ns: NS): Promise<void> {
       return;
     }
 
-    const runnerResult = getRunners(ns, scriptRam, opts.debug);
+    const runnerResult = getRunners(ns, scriptRam, opts.debug, opts.includeHome);
     const runners = runnerResult.runners.sort((a, b) => b.capacity - a.capacity);
     const targetResult = getTargets(ns, opts.debug);
     const targets = targetResult.targets;
