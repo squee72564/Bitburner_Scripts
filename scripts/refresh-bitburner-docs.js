@@ -5,48 +5,9 @@ const os = require('node:os');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 
-const TARBALL_URL =
-  'https://api.github.com/repos/bitburner-official/bitburner-src/tarball/stable';
+const TARBALL_URL = 'https://api.github.com/repos/bitburner-official/bitburner-src/tarball/stable';
 
 const execFileAsync = promisify(execFile);
-
-function fetch(url) {
-  return new Promise((resolve, reject) => {
-    https
-      .get(
-        url,
-        {
-          headers: {
-            'User-Agent': 'bitburner-docs-sync',
-            Accept: 'application/vnd.github+json',
-          },
-        },
-        (res) => {
-          let data = '';
-          res.on('data', (chunk) => {
-            data += chunk;
-          });
-          res.on('end', () => {
-            if (res.statusCode && res.statusCode >= 400) {
-              reject(new Error(`Request failed (${res.statusCode}): ${url}`));
-              return;
-            }
-            resolve(data);
-          });
-        },
-      )
-      .on('error', reject);
-  });
-}
-
-async function fetchJson(url) {
-  const text = await fetch(url);
-  return JSON.parse(text);
-}
-
-async function fetchText(url) {
-  return fetch(url);
-}
 
 function downloadToFile(url, filePath) {
   return new Promise((resolve, reject) => {
@@ -60,7 +21,12 @@ function downloadToFile(url, filePath) {
           },
         },
         (res) => {
-          if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          if (
+            res.statusCode &&
+            res.statusCode >= 300 &&
+            res.statusCode < 400 &&
+            res.headers.location
+          ) {
             res.resume();
             downloadToFile(res.headers.location, filePath).then(resolve).catch(reject);
             return;
