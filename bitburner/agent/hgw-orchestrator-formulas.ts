@@ -54,6 +54,7 @@ interface DesiredThreadsDetails {
 }
 
 const HGW_SCRIPT = '/agent/hgw-loop-formulas.js';
+const HGW_DEPENDENCIES = ['/lib/hacking-formulas.js'];
 
 function parseOptions(ns: NS): OrchestratorOptions | null {
   const flags = ns.flags([
@@ -343,6 +344,14 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
 
+  const currentHost = ns.getHostname();
+  const currentPid = ns.getRunningScript()?.pid;
+  for (const process of ns.ps(currentHost)) {
+    if (process.filename === ns.getScriptName() && process.pid !== currentPid) {
+      ns.kill(process.pid);
+    }
+  }
+
   while (true) {
     const scriptRam = ns.getScriptRam(HGW_SCRIPT);
     if (!scriptRam || scriptRam <= 0) {
@@ -441,7 +450,7 @@ export async function main(ns: NS): Promise<void> {
 
       const targetRunners = new Set(assignments.map((assignment) => assignment.runner));
       for (const runner of targetRunners) {
-        await ns.scp(HGW_SCRIPT, runner, 'home');
+        await ns.scp([HGW_SCRIPT, ...HGW_DEPENDENCIES], runner, 'home');
       }
 
       for (const assignment of assignments) {
