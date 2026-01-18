@@ -89,7 +89,7 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
       .slice(1)
       .map((server) => `connect ${server};`)
       .join(' ');
-    setPathStrings(commands ? [commands] : []);
+    setPathStrings(commands ? [`home; ${commands}`] : []);
   }, [adj, currentTarget, ns]);
 
   return (
