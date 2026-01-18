@@ -1,7 +1,7 @@
 import { NS } from '@ns';
 import { ServerDfs } from 'lib/dfs';
 
-const SCRIPT = 'agent/starter-hack.js';
+const SCRIPT = 'scripts/starter-hack.js';
 
 export async function main(ns: NS): Promise<void> {
   ns.disableLog('scan');

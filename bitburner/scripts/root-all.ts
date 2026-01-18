@@ -22,7 +22,7 @@ export async function main(ns: NS): Promise<void> {
     ['h', false],
   ]);
   if (flags.help || flags.h) {
-    ns.tprint('Usage: run agent/root-all.js');
+    ns.tprint('Usage: run scripts/root-all.js');
     return;
   }
   const availableOpeners = getAvailablePortOpeners(ns);

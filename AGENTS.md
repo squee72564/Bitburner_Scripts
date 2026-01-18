@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - `src/`: MCP server source (TypeScript). This is the Node runtime codebase.
-- `bitburner/`: Bitburner script sources (TypeScript/JS). Agent-owned files go in `bitburner/agent/`.
+- `bitburner/`: Bitburner script sources (TypeScript/JS). User-run scripts live in `bitburner/scripts/`.
 - `dist/`: Compiled Bitburner scripts pushed into the game (generated).
 - `dist-mcp/`: Compiled MCP server output (generated).
 - `build/`: Local sync helpers used by the Bitburner workflow.
@@ -37,7 +37,7 @@
 - PRs should include a short summary, key commands run, and any relevant screenshots (UI only).
 
 ## Agent-Specific Instructions
-- Agent-generated scripts should live under `bitburner/agent/` to avoid collisions.
+- Agent-generated scripts should live under `bitburner/scripts/` to avoid collisions.
 - Do not edit `dist/` directly; edit `bitburner/` and let the watch pipeline compile/sync.
  - MCP server logs go to stderr to keep stdout clean for MCP protocol traffic.
 - UI scripts can render React panels using the shared UI library in `bitburner/ui/` and the React/DOM shim in `bitburner/ui/react.ts`.

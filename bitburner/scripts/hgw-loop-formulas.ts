@@ -32,7 +32,9 @@ function parseOptions(ns: NS): LoopOptions | null {
   ]);
 
   if (flags.help) {
-    ns.tprint('Usage: run hgw-loop-formulas.js [target] [--money 0.9] [--hack 0.1] [--epsilon 1]');
+    ns.tprint(
+      'Usage: run scripts/hgw-loop-formulas.js [target] [--money 0.9] [--hack 0.1] [--epsilon 1]',
+    );
     return null;
   }
 

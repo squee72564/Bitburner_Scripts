@@ -1,7 +1,7 @@
 # HGW Orchestrator Design (Multi-Runner, Single-Target Assignments — Formulas-Aware)
 
 ## Prelude
-This document defines the formulas-aware orchestrator that launches `/agent/hgw-loop-formulas.js` across available runner servers. The orchestrator assigns each target server to a single runner (no overlaps) and periodically rebalances assignments. It uses formulas-based scoring and thread estimates when available.
+This document defines the formulas-aware orchestrator that launches `/scripts/hgw-loop-formulas.js` across available runner servers. The orchestrator assigns each target server to a single runner (no overlaps) and periodically rebalances assignments. It uses formulas-based scoring and thread estimates when available.
 
 ## Assumptions
 - The HGW loop runs on one server and targets exactly one other server.
@@ -84,9 +84,9 @@ This document defines the formulas-aware orchestrator that launches `/agent/hgw-
   - Launch new HGW loops.
 
 ## Launch Details
-- `ns.exec("/agent/hgw-loop-formulas.js", runner, threads, target, --money, --hack, --epsilon)`
+- `ns.exec("/scripts/hgw-loop-formulas.js", runner, threads, target, --money, --hack, --epsilon)`
 - `threads = floor(maxRam / hgwScriptRam)` (scripts are killed before launch, so max RAM is available)
-- `ns.scp` copies `/agent/hgw-loop-formulas.js` and `/lib/hacking-formulas.js` to each runner before `exec`
+- `ns.scp` copies `/scripts/hgw-loop-formulas.js` and `/lib/hacking-formulas.js` to each runner before `exec`
 
 ## Logging & Reporting
 - Terminal output is rendered as an **ExpandableList UI** (via `tprintRaw`).

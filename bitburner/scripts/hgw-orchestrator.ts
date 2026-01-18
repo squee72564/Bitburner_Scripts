@@ -1,15 +1,5 @@
-import { AutocompleteData, NS } from '@ns';
+import { NS } from '@ns';
 import { ServerDfs } from 'lib/dfs';
-import {
-  growThreads as formulaGrowThreads,
-  hackChance as formulaHackChance,
-  hackPercent,
-  hackTime as formulaHackTime,
-  growTime as formulaGrowTime,
-  weakenTime as formulaWeakenTime,
-} from 'lib/hacking-formulas';
-import { React } from '/ui/react';
-import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
 
 interface OrchestratorOptions {
   score: string;
@@ -17,7 +7,6 @@ interface OrchestratorOptions {
   moneyThreshold: number;
   hackFraction: number;
   securityEpsilon: number;
-  includeHome: boolean;
   dryRun: boolean;
   debug: boolean;
 }
@@ -41,13 +30,6 @@ interface Assignment {
   threads: number;
 }
 
-interface LaunchResult {
-  runner: string;
-  target: string;
-  threads: number;
-  pid: number;
-}
-
 interface DesiredThreadsDetails {
   weakenThreads: number;
   growThreads: number;
@@ -63,41 +45,7 @@ interface DesiredThreadsDetails {
   weakenTime: number;
 }
 
-const HGW_SCRIPT = '/agent/hgw-loop-formulas.js';
-const HGW_DEPENDENCIES = ['/lib/hacking-formulas.js'];
-const SCORE_MODES = [
-  'money',
-  'moneyTime',
-  'prepAware',
-  'growthWeighted',
-  'moneyChanceTime',
-] as const;
-const HOME_RAM_RESERVE = 32;
-
-export function autocomplete(data: AutocompleteData, args: string[]): string[] {
-  data.flags([
-    ['score', 'moneyChanceTime'],
-    ['rebalance', 1_800_000],
-    ['money', 0.9],
-    ['hack', 0.1],
-    ['epsilon', 1],
-    ['include-home', false],
-    ['dry', false],
-    ['debug', false],
-    ['help', false],
-  ]);
-
-  const lastArg = args.at(-1);
-  if (lastArg === '--score') {
-    return [...SCORE_MODES];
-  }
-  const prevArg = args.length > 1 ? args[args.length - 2] : undefined;
-  if (prevArg === '--score') {
-    const prefix = lastArg ?? '';
-    return SCORE_MODES.filter((mode) => mode.startsWith(prefix));
-  }
-  return [];
-}
+const HGW_SCRIPT = '/scripts/hgw-loop.js';
 
 function parseOptions(ns: NS): OrchestratorOptions | null {
   const flags = ns.flags([
@@ -106,7 +54,6 @@ function parseOptions(ns: NS): OrchestratorOptions | null {
     ['money', 0.9],
     ['hack', 0.1],
     ['epsilon', 1],
-    ['include-home', false],
     ['dry', false],
     ['debug', false],
     ['help', false],
@@ -114,7 +61,7 @@ function parseOptions(ns: NS): OrchestratorOptions | null {
 
   if (flags.help) {
     ns.tprint(
-      'Usage: run hgw-orchestrator-formulas.js [--score name] [--rebalance ms] [--money 0.9] [--hack 0.1] [--epsilon 1] [--include-home] [--dry] [--debug]',
+      'Usage: run scripts/hgw-orchestrator.js [--score name] [--rebalance ms] [--money 0.9] [--hack 0.1] [--epsilon 1] [--dry] [--debug]',
     );
     return null;
   }
@@ -124,31 +71,19 @@ function parseOptions(ns: NS): OrchestratorOptions | null {
   const moneyThreshold = Math.min(1, Math.max(0, Number(flags.money)));
   const hackFraction = Math.min(1, Math.max(0, Number(flags.hack)));
   const securityEpsilon = Math.max(0, Number(flags.epsilon));
-  const includeHome = Boolean(flags['include-home']);
   const dryRun = Boolean(flags.dry);
   const debug = Boolean(flags.debug);
 
-  return {
-    score,
-    rebalanceMs,
-    moneyThreshold,
-    hackFraction,
-    securityEpsilon,
-    includeHome,
-    dryRun,
-    debug,
-  };
+  return { score, rebalanceMs, moneyThreshold, hackFraction, securityEpsilon, dryRun, debug };
 }
 
 function scoreTarget(ns: NS, host: string, mode: string): number {
-  const server = ns.getServer(host);
-  const player = ns.getPlayer();
   const maxMoney = ns.getServerMaxMoney(host);
   const money = ns.getServerMoneyAvailable(host);
   const minSec = ns.getServerMinSecurityLevel(host);
   const sec = ns.getServerSecurityLevel(host);
-  const hackChance = formulaHackChance(ns, server, player);
-  const hackTime = formulaHackTime(ns, server, player);
+  const hackChance = ns.hackAnalyzeChance(host);
+  const hackTime = ns.getHackTime(host);
   const growth = ns.getServerGrowth(host);
 
   if (maxMoney <= 0 || hackTime <= 0) {
@@ -181,15 +116,13 @@ function computeDesiredThreadsDetails(
   hackFraction: number,
   securityEpsilon: number,
 ): DesiredThreadsDetails {
-  const server = ns.getServer(host);
-  const player = ns.getPlayer();
   const maxMoney = ns.getServerMaxMoney(host);
   const money = ns.getServerMoneyAvailable(host);
   const minSec = ns.getServerMinSecurityLevel(host);
   const sec = ns.getServerSecurityLevel(host);
-  const hackTime = formulaHackTime(ns, server, player);
-  const growTime = formulaGrowTime(ns, server, player);
-  const weakenTime = formulaWeakenTime(ns, server, player);
+  const hackTime = ns.getHackTime(host);
+  const growTime = ns.getGrowTime(host);
+  const weakenTime = ns.getWeakenTime(host);
   const weakenPerThread = ns.weakenAnalyze(1);
 
   const needWeaken = Math.max(0, sec - (minSec + securityEpsilon));
@@ -200,7 +133,7 @@ function computeDesiredThreadsDetails(
   if (maxMoney > 0) {
     const growMultiplier = maxMoney / Math.max(money, 1);
     if (money < maxMoney * moneyThreshold && growMultiplier > 1) {
-      growThreads = Math.ceil(formulaGrowThreads(ns, server, player, maxMoney));
+      growThreads = Math.ceil(ns.growthAnalyze(host, growMultiplier));
       const growSec = ns.growthAnalyzeSecurity(growThreads, host);
       growWeakenThreads = weakenPerThread > 0 ? Math.ceil(growSec / weakenPerThread) : 0;
     }
@@ -210,8 +143,7 @@ function computeDesiredThreadsDetails(
   let hackWeakenThreads = 0;
   if (maxMoney > 0) {
     const desiredHack = maxMoney * hackFraction;
-    const pct = hackPercent(ns, server, player);
-    hackThreads = pct > 0 ? Math.ceil(desiredHack / (money * pct)) : 0;
+    hackThreads = Math.ceil(ns.hackAnalyzeThreads(host, desiredHack));
     if (!Number.isFinite(hackThreads) || hackThreads < 0) {
       hackThreads = 0;
     }
@@ -262,16 +194,15 @@ function getRunners(
   ns: NS,
   scriptRam: number,
   debug: boolean,
-  includeHome: boolean,
 ): { runners: RunnerInfo[]; reasons: string[] } {
-  const networkServers: string[] = collectServers(ns);
-  const purchased: Set<string> = new Set(ns.getPurchasedServers());
-  const allServers: string[] = [...new Set([...networkServers, ...purchased])];
+  const networkServers = collectServers(ns);
+  const purchased = new Set(ns.getPurchasedServers());
+  const allServers = [...new Set([...networkServers, ...purchased])];
 
   const runners: RunnerInfo[] = [];
   const reasons: string[] = [];
   for (const host of allServers) {
-    if (host === 'home' && !includeHome) {
+    if (host === 'home') {
       if (debug) {
         reasons.push(`skip ${host}: home excluded`);
       }
@@ -291,17 +222,10 @@ function getRunners(
     }
 
     const maxRam = ns.getServerMaxRam(host);
-    const reservableRam = host === 'home' ? Math.max(0, maxRam - HOME_RAM_RESERVE) : maxRam;
-    const capacity = Math.floor(reservableRam / scriptRam);
+    const capacity = Math.floor(maxRam / scriptRam);
     if (capacity < 1) {
       if (debug) {
-        if (host === 'home') {
-          reasons.push(
-            `skip ${host}: reservableRam ${reservableRam} < scriptRam ${scriptRam} (reserve ${HOME_RAM_RESERVE})`,
-          );
-        } else {
-          reasons.push(`skip ${host}: maxRam ${maxRam} < scriptRam ${scriptRam}`);
-        }
+        reasons.push(`skip ${host}: maxRam ${maxRam} < scriptRam ${scriptRam}`);
       }
       continue;
     }
@@ -390,172 +314,6 @@ function buildAssignments(runners: RunnerInfo[], targets: TargetInfo[]): Assignm
   return assignments;
 }
 
-function renderDebugUi(
-  ns: NS,
-  data: {
-    scriptRam: number;
-    runners: RunnerInfo[];
-    targets: string[];
-    runnerReasons: string[];
-    targetReasons: string[];
-    scoredTargets: TargetInfo[];
-    assignments: Assignment[];
-    launchResults?: LaunchResult[];
-    dryRun: boolean;
-  },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): any {
-  const el = React.createElement;
-  const items: ExpandableItem[] = [];
-
-  if (data.runnerReasons.length > 0) {
-    items.push({
-      id: 'runner-reasons',
-      header: el(
-        'span',
-        null,
-        'Runner skips ',
-        el('strong', null, `(${ns.formatNumber(data.runnerReasons.length)})`),
-      ),
-      content: el(
-        'div',
-        null,
-        data.runnerReasons.map((reason) => el('div', { key: reason }, reason)),
-      ),
-    });
-  }
-
-  if (data.targetReasons.length > 0) {
-    items.push({
-      id: 'target-reasons',
-      header: el(
-        'span',
-        null,
-        'Target skips ',
-        el('strong', null, `(${ns.formatNumber(data.targetReasons.length)})`),
-      ),
-      content: el(
-        'div',
-        null,
-        data.targetReasons.map((reason) => el('div', { key: reason }, reason)),
-      ),
-    });
-  }
-
-  if (data.scoredTargets.length > 0) {
-    items.push({
-      id: 'targets',
-      header: el(
-        'span',
-        null,
-        'Targets ',
-        el('strong', null, `(${ns.formatNumber(data.scoredTargets.length)})`),
-      ),
-      content: el(
-        'div',
-        { style: { display: 'flex', flexDirection: 'column', gap: '6px' } },
-        data.scoredTargets.map((target) => {
-          const details = target.details;
-          if (!details) {
-            return el('div', { key: target.host }, target.host);
-          }
-          const moneyRatio = details.maxMoney > 0 ? details.money / details.maxMoney : 0;
-          return el(
-            'div',
-            {
-              key: target.host,
-              style: { borderBottom: '1px solid #2a2f3a', paddingBottom: '6px' },
-            },
-            el(
-              'div',
-              null,
-              el('strong', null, target.host),
-              ` · desired ${ns.formatNumber(target.desiredThreads)}`,
-            ),
-            el(
-              'div',
-              null,
-              `w:${ns.formatNumber(details.weakenThreads)} g:${ns.formatNumber(details.growThreads)}` +
-                `/gw:${ns.formatNumber(details.growWeakenThreads)} h:${ns.formatNumber(details.hackThreads)}` +
-                `/hw:${ns.formatNumber(details.hackWeakenThreads)}`,
-            ),
-            el(
-              'div',
-              null,
-              `money ${ns.formatNumber(details.money)}/${ns.formatNumber(details.maxMoney)} ` +
-                `(${ns.formatPercent(moneyRatio)}) · sec ${details.sec.toFixed(2)}/${details.minSec.toFixed(2)}`,
-            ),
-            el(
-              'div',
-              null,
-              `time h/g/w ${ns.tFormat(details.hackTime)}/${ns.tFormat(details.growTime)}/${ns.tFormat(details.weakenTime)}`,
-            ),
-          );
-        }),
-      ),
-    });
-  }
-
-  if (data.assignments.length > 0) {
-    items.push({
-      id: 'run-info',
-      header: el(
-        'span',
-        null,
-        data.dryRun ? 'Dry run plans ' : 'Run assignments ',
-        el('strong', null, `(${ns.formatNumber(data.assignments.length)})`),
-      ),
-      content: el(
-        'div',
-        null,
-        data.assignments.map((assignment) =>
-          el(
-            'div',
-            { key: `${assignment.runner}-${assignment.target}` },
-            `${assignment.runner} → ${assignment.target} (${ns.formatNumber(assignment.threads)} threads)`,
-          ),
-        ),
-      ),
-    });
-  }
-
-  if (data.launchResults && data.launchResults.length > 0) {
-    items.push({
-      id: 'launch-results',
-      header: el(
-        'span',
-        null,
-        'Launch results ',
-        el('strong', null, `(${ns.formatNumber(data.launchResults.length)})`),
-      ),
-      content: el(
-        'div',
-        null,
-        data.launchResults.map((result) =>
-          el(
-            'div',
-            { key: `${result.runner}-${result.target}` },
-            `${result.runner} → ${result.target} (${ns.formatNumber(result.threads)} threads) ` +
-              (result.pid === 0 ? 'FAILED' : `pid ${result.pid}`),
-          ),
-        ),
-      ),
-    });
-  }
-
-  return el(
-    'div',
-    { style: { border: '1px solid #3a3f4b', borderRadius: '8px', padding: '10px' } },
-    el(
-      'div',
-      { style: { fontWeight: 600, marginBottom: '6px' } },
-      `HGW Orchestrator Debug · RAM ${ns.formatRam(data.scriptRam)} · runners ` +
-        `${ns.formatNumber(data.runners.length)} · targets ${ns.formatNumber(data.targets.length)}`,
-    ),
-    el(ExpandableList, { items, defaultExpandedIds: ['run-info', 'launch-results'] }),
-  );
-}
-
 function killRunnerScripts(ns: NS, runners: RunnerInfo[]): void {
   const currentHost = ns.getHostname();
   for (const runner of runners) {
@@ -572,14 +330,6 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
 
-  const currentHost = ns.getHostname();
-  const currentPid = ns.getRunningScript()?.pid;
-  for (const process of ns.ps(currentHost)) {
-    if (process.filename === ns.getScriptName() && process.pid !== currentPid && !opts.dryRun) {
-      ns.kill(process.pid);
-    }
-  }
-
   while (true) {
     const scriptRam = ns.getScriptRam(HGW_SCRIPT);
     if (!scriptRam || scriptRam <= 0) {
@@ -587,10 +337,26 @@ export async function main(ns: NS): Promise<void> {
       return;
     }
 
-    const runnerResult = getRunners(ns, scriptRam, opts.debug, opts.includeHome);
+    const runnerResult = getRunners(ns, scriptRam, opts.debug);
     const runners = runnerResult.runners.sort((a, b) => b.capacity - a.capacity);
     const targetResult = getTargets(ns, opts.debug);
     const targets = targetResult.targets;
+
+    if (opts.debug) {
+      ns.tprint(`HGW script RAM: ${scriptRam}`);
+      ns.tprint(`Runners found: ${runners.length}`);
+      ns.tprint(`Targets found: ${targets.length}`);
+
+      ns.tprint(`Runner results ---------`);
+      for (const reason of runnerResult.reasons) {
+        ns.tprint(reason);
+      }
+
+      ns.tprint(`Target results ---------`);
+      for (const reason of targetResult.reasons) {
+        ns.tprint(reason);
+      }
+    }
 
     if (runners.length === 0 || targets.length === 0) {
       ns.tprint('No runners or targets available.');
@@ -616,41 +382,50 @@ export async function main(ns: NS): Promise<void> {
       })
       .sort((a, b) => b.score - a.score);
 
+    if (opts.debug) {
+      for (const target of scoredTargets) {
+        const details = target.details;
+        if (!details) {
+          continue;
+        }
+        ns.tprint(
+          `Target ${target.host}: desired=${target.desiredThreads} ` +
+            `(w:${details.weakenThreads} g:${details.growThreads}/gw:${details.growWeakenThreads} ` +
+            `h:${details.hackThreads}/hw:${details.hackWeakenThreads}) ` +
+            `money=${Math.round(details.money)}/${Math.round(details.maxMoney)} ` +
+            `sec=${details.sec.toFixed(2)}/${details.minSec.toFixed(2)} ` +
+            `time(h/g/w)=${Math.round(details.hackTime)}/${Math.round(details.growTime)}/${Math.round(details.weakenTime)}ms`,
+        );
+      }
+    }
+
     const totalThreads = runners.reduce((sum, runner) => sum + runner.capacity, 0);
 
     if (totalThreads < scoredTargets.length) {
       ns.tprint(
-        `Warning: only ${ns.formatNumber(totalThreads)} threads available for ` +
-          `${ns.formatNumber(scoredTargets.length)} targets. Covering top-scored targets only.`,
+        `Warning: only ${totalThreads} threads available for ${scoredTargets.length} targets. ` +
+          'Covering top-scored targets only.',
       );
     }
 
     const assignments = buildAssignments(runners, scoredTargets);
 
-    ns.tprintRaw(
-      renderDebugUi(ns, {
-        scriptRam,
-        runners,
-        targets,
-        runnerReasons: runnerResult.reasons,
-        targetReasons: targetResult.reasons,
-        scoredTargets,
-        assignments,
-        dryRun: opts.dryRun,
-      }),
-    );
-
     if (opts.dryRun) {
+      ns.tprint(`Dry run: ${assignments.length} assignments planned.`);
+      for (const assignment of assignments) {
+        ns.tprint(
+          `Plan: ${assignment.runner} -> ${assignment.target} (${assignment.threads} threads)`,
+        );
+      }
       return;
     } else {
       killRunnerScripts(ns, runners);
 
       const targetRunners = new Set(assignments.map((assignment) => assignment.runner));
       for (const runner of targetRunners) {
-        await ns.scp([HGW_SCRIPT, ...HGW_DEPENDENCIES], runner, 'home');
+        await ns.scp(HGW_SCRIPT, runner, 'home');
       }
 
-      const launchResults: LaunchResult[] = [];
       for (const assignment of assignments) {
         const { runner, target } = assignment;
         const pid = ns.exec(
@@ -665,22 +440,12 @@ export async function main(ns: NS): Promise<void> {
           '--epsilon',
           String(opts.securityEpsilon),
         );
-        launchResults.push({ runner, target, threads: assignment.threads, pid });
+        if (pid === 0) {
+          ns.tprint(`Failed to launch HGW loop on ${runner} targeting ${target}.`);
+        } else {
+          ns.tprint(`Launched HGW loop on ${runner} -> ${target} (${assignment.threads} threads)`);
+        }
       }
-
-      ns.tprintRaw(
-        renderDebugUi(ns, {
-          scriptRam,
-          runners,
-          targets,
-          runnerReasons: runnerResult.reasons,
-          targetReasons: targetResult.reasons,
-          scoredTargets,
-          assignments,
-          launchResults,
-          dryRun: opts.dryRun,
-        }),
-      );
     }
 
     await ns.sleep(opts.rebalanceMs);

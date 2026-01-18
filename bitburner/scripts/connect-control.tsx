@@ -207,9 +207,9 @@ function findShortestPath(adj: Map<string, Set<string>>, start: string, target: 
 }
 
 function printHelp(ns: NS): void {
-  ns.tprint('Usage: run agent/connect-control.js');
+  ns.tprint('Usage: run scripts/connect-control.js');
   ns.tprint('Examples:');
-  ns.tprint('  run agent/server-control.js');
+  ns.tprint('  run scripts/server-control.js');
 }
 
 const styles: Record<string, React.CSSProperties> = {

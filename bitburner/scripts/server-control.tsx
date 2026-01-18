@@ -304,10 +304,10 @@ function getRamOptions(maxRam: number): number[] {
 }
 
 function printHelp(ns: NS): void {
-  ns.tprint('Usage: run agent/server-control.js [--prefix name]');
+  ns.tprint('Usage: run scripts/server-control.js [--prefix name]');
   ns.tprint('Examples:');
-  ns.tprint('  run agent/server-control.js');
-  ns.tprint('  run agent/server-control.js --prefix pserv');
+  ns.tprint('  run scripts/server-control.js');
+  ns.tprint('  run scripts/server-control.js --prefix pserv');
 }
 
 const styles: Record<string, React.CSSProperties> = {

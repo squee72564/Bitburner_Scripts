@@ -93,8 +93,8 @@ export async function main(ns: NS): Promise<void> {
 }
 
 function printHelp(ns: NS): void {
-  ns.tprint('Usage: run agent/rooted-list.js [--debug]');
+  ns.tprint('Usage: run scripts/rooted-list.js [--debug]');
   ns.tprint('Examples:');
-  ns.tprint('  run agent/rooted-list.js');
-  ns.tprint('  run agent/rooted-list.js --debug');
+  ns.tprint('  run scripts/rooted-list.js');
+  ns.tprint('  run scripts/rooted-list.js --debug');
 }

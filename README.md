@@ -1,10 +1,10 @@
 # Bitburner Helper Toolkit (Scripts, UI, Sync, and MCP)
 
-This repo is primarily a Bitburner automation toolkit: agent scripts, UI components, helper libraries, and a local TypeScript workflow that syncs to the game. It also includes an optional MCP (Model Context Protocol) server for LLM tooling.
+This repo is primarily a Bitburner automation toolkit: user-run scripts, UI components, helper libraries, and a local TypeScript workflow that syncs to the game. It also includes an optional MCP (Model Context Protocol) server for LLM tooling.
 
 ## Project Goals (Current Focus)
 
-- Ship reusable Bitburner scripts under `bitburner/agent/`.
+- Ship reusable Bitburner scripts under `bitburner/scripts/`.
 - Provide a clean TS workflow + sync pipeline (`bitburner/` → `dist/` → game).
 - Support in-game React rendering with a light UI toolkit.
 - Keep local Bitburner API docs for quick lookup and LLM use.
@@ -13,7 +13,7 @@ This repo is primarily a Bitburner automation toolkit: agent scripts, UI compone
 ## Repository Layout (High-Level)
 
 - Bitburner scripts source: `bitburner/`
-  - Agent scripts: `bitburner/agent/`
+  - User scripts: `bitburner/scripts/`
   - UI components: `bitburner/ui/components/`
   - UI React/DOM shim: `bitburner/ui/react.ts`
   - Helpers and traversal utilities: `bitburner/lib/`
