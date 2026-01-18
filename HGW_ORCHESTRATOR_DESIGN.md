@@ -1,19 +1,19 @@
-# HGW Orchestrator Design (Multi-Runner, Single-Target Assignments)
+# HGW Orchestrator Design (Multi-Runner, Single-Target Assignments — Formulas-Aware)
 
 ## Prelude
-This document defines a long-running orchestration script that launches the advanced HGW loop (`/agent/hgw-loop.js`) across all available runner servers. The orchestrator assigns each target server to exactly one runner, ensuring no overlaps, and periodically rebalances assignments to reflect the current game state (new roots, more RAM, higher hacking level). The script prioritizes target coverage first, then allocates remaining capacity to the best-scored targets.
+This document defines the formulas-aware orchestrator that launches `/agent/hgw-loop-formulas.js` across available runner servers. The orchestrator assigns each target server to a single runner (no overlaps) and periodically rebalances assignments. It uses formulas-based scoring and thread estimates when available.
 
 ## Assumptions
 - The HGW loop runs on one server and targets exactly one other server.
 - No two HGW loops should target the same server (no overlaps).
 - The orchestrator can kill scripts on runner servers.
-- Home is never used as a runner.
+- Home is excluded by default, but can be included with `--include-home` (with a RAM reserve).
 - Purchased servers are runners only and are never targets.
 - All state changes on targets are caused by the HGW loops we start (no external interference).
 - Root access to targets is required.
 - Targets must be hackable by player hacking level (skip otherwise).
 - The orchestrator runs continuously and rebalances on a fixed interval.
-- Rebalance interval is long (30 minutes).
+- Rebalance interval defaults to 30 minutes (clamped to >= 60s).
 - The orchestrator can optionally run in dry-run mode (planning only).
 
 ## Use Cases
@@ -23,16 +23,15 @@ This document defines a long-running orchestration script that launches the adva
 - Keep the system updated as the player’s hacking level and network evolve.
 
 ## Core Features
-- **Runner discovery:** rooted servers + purchased servers, excluding home.
+- **Runner discovery:** rooted servers + purchased servers, excluding home by default.
 - **Target discovery:** rooted, hackable, non-purchased servers with `maxMoney > 0`.
 - **Scoring:** configurable scoring formulas to rank target attractiveness.
-- **Coverage-first allocation:** guarantee 1 thread per target if total threads allow.
-- **Capacity-based allocation:** distribute remaining threads to best targets on the same runner.
+- **Greedy allocation:** each target requests a desired thread count (max of weaken/grow/hack needs). A runner is chosen by best-fit capacity. Targets may be skipped if no runner has capacity for their desired threads.
 - **Multi-target runners:** a single runner can host multiple targets when targets exceed runners or when capacity allows.
-- **Rebalancing:** stop current HGW loops and restart with a fresh assignment every 30 minutes.
-- **Full wipe on rebalance:** kill all scripts on runners each rebalance cycle (same as startup). The orchestrator host is not killed to avoid terminating itself.
+- **Rebalancing:** stop current HGW loops and restart with a fresh assignment every rebalance cycle.
+- **Full wipe on rebalance:** kill all scripts on runners each cycle. The orchestrator host is not killed to avoid terminating itself.
 - **Warnings:** if total available threads < number of targets, warn and cover only top-scoring targets.
-- **Dry run:** compute and print assignments without killing or launching scripts.
+- **Dry run:** compute assignments and render the plan UI; no killing or launching occurs.
 
 ## Inputs / Flags
 - `--score <name>`: choose target scoring model.
@@ -45,11 +44,13 @@ This document defines a long-running orchestration script that launches the adva
 - `--money <ratio>`: forwarded to HGW loop (`--money` threshold).
 - `--hack <ratio>`: forwarded to HGW loop (`--hack` fraction).
 - `--epsilon <value>`: forwarded to HGW loop (`--epsilon` security buffer).
-- `--dry`: compute plan and print assignments, but do not kill, scp, or exec.
+- `--include-home`: allow home as a runner with a 32GB reserve.
+- `--dry`: compute plan and render assignments, but do not kill, scp, or exec.
 
 ## Data Collection
 ### Runner metadata
 - `maxRam`, `threadsAvailable = floor(maxRam / hgwScriptRam)` (full wipe before launch).
+- If home is included, reservable RAM is `maxRam - 32GB`.
 - Purchased servers: `ns.getPurchasedServers()` (added even if not reachable via scan).
 - Rooted servers: derived from DFS/BFS over network and `ns.hasRootAccess`.
 - Final runner list = union of scanned servers and purchased servers.
@@ -61,19 +62,19 @@ This document defines a long-running orchestration script that launches the adva
 ## Assignment Strategy
 1) **Compute capacities** for all runners.
 2) **Score targets** using selected score function.
-3) **Coverage phase** (if possible):
-   - If total threads >= target count, assign 1 thread to every target.
-4) **Shortfall behavior** (if total threads < target count):
-   - Print a warning.
-   - Assign one thread to the top-scoring targets until threads are exhausted.
-5) **Boost phase** (if threads remain after coverage):
-   - Distribute remaining threads to the highest-scoring targets, keeping each target bound to a single runner.
+3) **Compute desired threads** per target:
+   - `weakenThreads` from `(sec - (minSec + epsilon)) / weakenAnalyze(1)`
+   - `growThreads` from `growThreads(formulas, maxMoney)` when money is below threshold
+   - `hackThreads` from `hackPercent(formulas)` and desired fraction of max money
+   - `desiredThreads = max(weakenThreads, growThreads, growWeakenThreads, hackThreads, hackWeakenThreads)`
+4) **Greedy placement** by best-fit runner capacity:
+   - Pick the smallest runner that can fit the target’s desired threads.
+   - If none can fit, fall back to the largest runner (if it has any remaining threads).
+   - Targets can be skipped if no runner has remaining capacity.
 
 ### Placement (greedy assignment)
 - Maintain remaining thread capacity per runner.
-- Coverage step assigns each target to the runner with the most remaining capacity.
-- Boost step adds extra threads to existing assignments if that runner still has capacity.
-- A target is always bound to a single runner.
+- Assign targets by best-fit capacity with no overlap.
 
 ## Rebalancing Behavior
 - **Startup:** kill all scripts on runners, then assign and launch.
@@ -83,26 +84,24 @@ This document defines a long-running orchestration script that launches the adva
   - Launch new HGW loops.
 
 ## Launch Details
-- `ns.exec("/agent/hgw-loop.js", runner, threads, target, --money, --hack, --epsilon)`
+- `ns.exec("/agent/hgw-loop-formulas.js", runner, threads, target, --money, --hack, --epsilon)`
 - `threads = floor(maxRam / hgwScriptRam)` (scripts are killed before launch, so max RAM is available)
-- `ns.scp` copies `/agent/hgw-loop.js` to each runner before `exec`
+- `ns.scp` copies `/agent/hgw-loop-formulas.js` and `/lib/hacking-formulas.js` to each runner before `exec`
 
 ## Logging & Reporting
-- Summary of runners and total thread capacity.
-- Target count and top-ranked targets.
-- Warning if coverage is incomplete.
-- Per-assignment output: runner → target, threads.
-- Dry run prints assignments without modifying state.
+- Terminal output is rendered as an **ExpandableList UI** (via `tprintRaw`).
+- Sections: runner skips, target skips, target details, run plan, launch results.
+- Launch results report `pid` or `FAILED` per assignment.
 
 ## Non-Goals
 - No partial overlap between targets.
 - No targeting of purchased servers.
-- No use of home as a runner.
+- Home is excluded by default, but can be included with `--include-home` (32GB reserve).
 - No sophisticated scheduling beyond periodic full rebalance.
 
 ## Risks / Edge Cases
 - If `hgw-loop.js` RAM cost exceeds some runner’s max RAM, that runner is excluded.
 - If total threads < targets, some targets remain unassigned.
 - Killed scripts could include non-HGW work if the user runs other scripts on runners.
-- Full wipe does not include the orchestrator host (to avoid self-termination). Run the orchestrator on home if you want all other runners wiped each cycle.
+- Full wipe does not include the orchestrator host (to avoid self-termination). Run on home to wipe all other runners each cycle.
 - Scoring is heuristic; different formulas may change outcomes.
