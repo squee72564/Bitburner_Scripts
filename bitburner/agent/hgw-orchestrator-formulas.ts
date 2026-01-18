@@ -1,4 +1,4 @@
-import { NS } from '@ns';
+import { AutocompleteData, NS } from '@ns';
 import { ServerDfs } from 'lib/dfs';
 import {
   growThreads as formulaGrowThreads,
@@ -55,6 +55,31 @@ interface DesiredThreadsDetails {
 
 const HGW_SCRIPT = '/agent/hgw-loop-formulas.js';
 const HGW_DEPENDENCIES = ['/lib/hacking-formulas.js'];
+const SCORE_MODES = ['money', 'moneyTime', 'prepAware', 'growthWeighted', 'moneyChanceTime'] as const;
+
+export function autocomplete(data: AutocompleteData, args: string[]): string[] {
+  data.flags([
+    ['score', 'moneyChanceTime'],
+    ['rebalance', 1_800_000],
+    ['money', 0.9],
+    ['hack', 0.1],
+    ['epsilon', 1],
+    ['dry', false],
+    ['debug', false],
+    ['help', false],
+  ]);
+
+  const lastArg = args.at(-1);
+  if (lastArg === '--score') {
+    return [...SCORE_MODES];
+  }
+  const prevArg = args.length > 1 ? args[args.length - 2] : undefined;
+  if (prevArg === '--score') {
+    const prefix = lastArg ?? '';
+    return SCORE_MODES.filter((mode) => mode.startsWith(prefix));
+  }
+  return [];
+}
 
 function parseOptions(ns: NS): OrchestratorOptions | null {
   const flags = ns.flags([
