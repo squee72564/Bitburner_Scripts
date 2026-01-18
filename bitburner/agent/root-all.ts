@@ -1,4 +1,6 @@
 import { AutocompleteData, NS } from '@ns';
+import { React } from '/ui/react';
+import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
 import { ServerDfs } from 'lib/dfs';
 import { isHome } from 'lib/host';
 
@@ -24,6 +26,7 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
   const availableOpeners = getAvailablePortOpeners(ns);
+  const rooted: string[] = [];
 
   const dfs = new ServerDfs(ns, {
     shouldAct: (_ns: NS, host: string) => {
@@ -39,12 +42,32 @@ export async function main(ns: NS): Promise<void> {
         openPorts(ns, host, requiredPorts, availableOpeners);
       }
       if (ns.nuke(host)) {
+        rooted.push(host);
         ns.tprint(`nuked ${host}`);
       }
     },
   });
 
   dfs.traverse();
+
+  const el = React.createElement;
+  const items: ExpandableItem[] = [
+    {
+      id: 'rooted',
+      header: el('span', null, `Rooted (${ns.formatNumber(rooted.length)})`),
+      content:
+        rooted.length === 0
+          ? el('div', null, 'No servers rooted.')
+          : el(
+              'div',
+              null,
+              rooted.map((host) => el('div', { key: host }, host)),
+            ),
+    },
+  ];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ns.tprintRaw(el(ExpandableList, { items }) as any);
 }
 
 export function autocomplete(data: AutocompleteData): string[] {
