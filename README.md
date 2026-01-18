@@ -1,23 +1,29 @@
-# Bitburner MCP Server
+# Bitburner Helper Toolkit (Scripts, UI, Sync, and MCP)
 
-An MCP (Model Context Protocol) server that wraps the Bitburner Remote API to provide safe, filesystem-only tooling for LLM coding agents. The repo also includes a Bitburner TypeScript workflow for your in-game scripts, based on the official Bitburner TypeScript template (without Docker).
+This repo is primarily a Bitburner automation toolkit: agent scripts, UI components, helper libraries, and a local TypeScript workflow that syncs to the game. It also includes an optional MCP (Model Context Protocol) server for LLM tooling.
 
-## Project Goals
+## Project Goals (Current Focus)
 
-- Provide a stable bridge between LLM agents and the Bitburner in-game filesystem.
-- Map Bitburner Remote API methods 1:1 into MCP tools.
-- Enforce safety constraints (default to `home`, reject empty filenames, limit file sizes).
-- Offer a local TypeScript workflow for writing Bitburner scripts.
+- Ship reusable Bitburner scripts under `bitburner/agent/`.
+- Provide a clean TS workflow + sync pipeline (`bitburner/` → `dist/` → game).
+- Support in-game React rendering with a light UI toolkit.
+- Keep local Bitburner API docs for quick lookup and LLM use.
+- Optionally expose an MCP server for read-only tooling over the Remote API.
 
-## Repository Layout
+## Repository Layout (High-Level)
 
-- MCP server source: `src/`
 - Bitburner scripts source: `bitburner/`
-- Bitburner build output: `dist/`
+  - Agent scripts: `bitburner/agent/`
+  - UI components: `bitburner/ui/components/`
+  - UI React/DOM shim: `bitburner/ui/react.ts`
+  - Helpers and traversal utilities: `bitburner/lib/`
+  - TS shim: `bitburner/react-shim.d.ts`
+- Bitburner build output (synced to game): `dist/`
+- Sync helpers + Remote API client: `build/` and `build/remote-sync.js`
+- Sync config: `filesync.json`
+- Local Bitburner docs: `docs/bitburner/`
+- MCP server source (optional): `src/`
 - MCP server build output: `dist-mcp/`
-- Bitburner sync config (file types/output): `filesync.json`
-- Remote sync client: `build/remote-sync.js`
-  - Agent-managed scripts: `bitburner/agent/`
 
 ## Bitburner TypeScript Workflow
 
@@ -54,10 +60,10 @@ pnpm run build:bb
 
 ### React helper (optional)
 
-If you use React inside Bitburner UI scripts, import the helper shim:
+If you use React inside Bitburner UI scripts, import the in-game shim:
 
 ```
-import React, { ReactDOM } from "@react";
+import { React, ReactDOM } from "/ui/react";
 ```
 
 ## Linting
@@ -84,7 +90,11 @@ pnpm run format:check
 
 This repo includes a lightweight UI toolkit for Bitburner scripts under `bitburner/ui/`. Use the React/DOM shim in `bitburner/ui/react.ts` to render floating panels or modals directly into the game UI.
 
-## MCP Server
+## Local Bitburner Docs
+
+Use `scripts/refresh-bitburner-docs.js` to pull API docs into `docs/bitburner/` for offline lookup or LLM usage.
+
+## MCP Server (Optional)
 
 The MCP server is implemented under `src/` and connects to Bitburner’s Remote API over WebSocket using MCP stdio transport.
 
@@ -143,7 +153,7 @@ Optional: set `PROXY_LOG_LEVEL=debug` in `.env` to see proxy request/response lo
 - Design doc: `DESIGN_DOC.md`
 - Implementation plan: `IMPLEMENTATION_PLAN.md`
 
-## Scope
+## MCP Scope
 
-- Filesystem-level access only (read/write/delete/list, RAM calculation, type definitions).
-- No gameplay control or in-game state manipulation.
+- MCP tooling is filesystem-only (read/write/delete/list, RAM calculation, type definitions).
+- No gameplay control or in-game state manipulation via MCP.
