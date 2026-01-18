@@ -1,8 +1,30 @@
-import { NS } from '@ns';
+import { AutocompleteData, NS } from '@ns';
 import { ServerDfs } from 'lib/dfs';
 import { isHome } from 'lib/host';
 
 type Mode = 'rooted' | 'hackable' | 'not-hackable';
+
+export function autocomplete(data: AutocompleteData, args: string[]): string[] {
+  data.flags([
+    ['mode', 'rooted'],
+    ['m', 'rooted'],
+    ['debug', false],
+    ['help', false],
+    ['h', false],
+  ]);
+
+  const modes: Mode[] = ['rooted', 'hackable', 'not-hackable'];
+  const lastArg = args.at(-1);
+  if (lastArg === '--mode' || lastArg === '-m') {
+    return modes;
+  }
+  const prevArg = args.length > 1 ? args[args.length - 2] : undefined;
+  if (prevArg === '--mode' || prevArg === '-m') {
+    const prefix = lastArg ?? '';
+    return modes.filter((mode) => mode.startsWith(prefix));
+  }
+  return [];
+}
 
 export async function main(ns: NS): Promise<void> {
   ns.disableLog('scan');
