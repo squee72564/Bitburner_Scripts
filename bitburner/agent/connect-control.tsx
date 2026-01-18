@@ -83,7 +83,7 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
       setPathStrings([]);
       return;
     }
-    const start = ns.getHostname();
+    const start = 'home';
     const path = findShortestPath(adj, start, currentTarget);
     const commands = path
       .slice(1)
@@ -101,54 +101,60 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
           defaultWidth={560}
           defaultHeight={460}
         >
-          <div style={styles.sectionTitle}>Servers</div>
-          <div style={styles.card}>
-            <div style={styles.scrollArea}>
-              {Array.from(adj.keys()).map((server) => (
-                <div
-                  key={server}
-                  style={{
-                    ...styles.rowWrap,
-                    ...(hoveredServer === server ? styles.rowWrapHover : {}),
-                  }}
-                  onMouseEnter={() => setHoveredServer(server)}
-                  onMouseLeave={() => setHoveredServer(null)}
-                  onClick={() => setCurrentTarget(server)}
-                >
-                  <div
-                    style={{
-                      ...styles.row,
-                      ...(hoveredServer === server ? styles.rowHover : {}),
-                    }}
-                  >
-                    <p>{server}</p>
-                  </div>
+          <div style={styles.panelBody}>
+            <div style={{ ...styles.sectionWrap, ...styles.serversSection }}>
+              <div style={styles.sectionTitle}>Servers</div>
+              <div style={{ ...styles.card, ...styles.sectionCard }}>
+                <div style={styles.scrollArea}>
+                  {Array.from(adj.keys()).map((server) => (
+                    <div
+                      key={server}
+                      style={{
+                        ...styles.rowWrap,
+                        ...(hoveredServer === server ? styles.rowWrapHover : {}),
+                      }}
+                      onMouseEnter={() => setHoveredServer(server)}
+                      onMouseLeave={() => setHoveredServer(null)}
+                      onClick={() => setCurrentTarget(server)}
+                    >
+                      <div
+                        style={{
+                          ...styles.row,
+                          ...(hoveredServer === server ? styles.rowHover : {}),
+                        }}
+                      >
+                        <p>{server}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-          <div style={styles.sectionTitle}>Path</div>
-          <div style={styles.card}>
-            {pathStrings.length > 0 ? (
-              <>
-                <p style={styles.mono}>{pathStrings[0]}</p>
-                <div style={styles.actions}>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      copyToClipboard(pathStrings[0], ns, () => {
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 1500);
-                      })
-                    }
-                  >
-                    {copied ? 'Copied' : 'Copy'}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p>Select a server to get its traversal path.</p>
-            )}
+            <div style={styles.sectionWrap}>
+              <div style={styles.sectionTitle}>Path</div>
+              <div style={styles.card}>
+                {pathStrings.length > 0 ? (
+                  <>
+                    <p style={styles.mono}>{pathStrings[0]}</p>
+                    <div style={styles.actions}>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          copyToClipboard(pathStrings[0], ns, () => {
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 1500);
+                          })
+                        }
+                      >
+                        {copied ? 'Copied' : 'Copy'}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <p>Select a server to get its traversal path.</p>
+                )}
+              </div>
+            </div>
           </div>
         </ResizablePanel>
       </FloatingPanel>
@@ -207,6 +213,21 @@ function printHelp(ns: NS): void {
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  panelBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    minHeight: 0,
+  },
+  sectionWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+  },
+  serversSection: {
+    flex: 1,
+    minHeight: '220px',
+  },
   sectionTitle: {
     fontSize: font.titleSize,
     fontWeight: 600,
@@ -218,8 +239,15 @@ const styles: Record<string, React.CSSProperties> = {
     padding: spacing.md,
     marginBottom: spacing.md,
   },
+  sectionCard: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+  },
   scrollArea: {
-    maxHeight: '220px',
+    flex: 1,
+    minHeight: 0,
     overflowY: 'auto',
   },
   rowWrap: {
