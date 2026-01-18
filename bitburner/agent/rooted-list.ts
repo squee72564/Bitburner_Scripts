@@ -9,6 +9,7 @@ export async function main(ns: NS): Promise<void> {
   const flags = ns.flags([
     ['mode', 'rooted'],
     ['m', 'rooted'],
+    ['debug', false],
     ['help', false],
     ['h', false],
   ]);
@@ -27,6 +28,7 @@ export async function main(ns: NS): Promise<void> {
   }
 
   const playerHack = ns.getHackingLevel();
+  const debug = Boolean(flags.debug);
   const dfs = new ServerDfs(ns, {
     shouldAct: (_ns, host) => !isHome(host),
     onVisit: (_ns: NS, host: string) => {
@@ -41,7 +43,11 @@ export async function main(ns: NS): Promise<void> {
       } else if (mode === 'hackable' && isHackable) {
         ns.tprint(host);
       } else if (mode === 'not-hackable' && !isHackable) {
-        ns.tprint(host);
+        if (debug) {
+          ns.tprint(`${host}: required ${required}, player ${playerHack}`);
+        } else {
+          ns.tprint(host);
+        }
       }
     },
   });
@@ -56,10 +62,11 @@ function parseMode(value: string): Mode | null {
 }
 
 function printHelp(ns: NS): void {
-  ns.tprint('Usage: run agent/rooted-list.js [--mode rooted|hackable|not-hackable]');
+  ns.tprint('Usage: run agent/rooted-list.js [--mode rooted|hackable|not-hackable] [--debug]');
   ns.tprint('Defaults: --mode rooted');
   ns.tprint('Examples:');
   ns.tprint('  run agent/rooted-list.js');
   ns.tprint('  run agent/rooted-list.js --mode hackable');
   ns.tprint('  run agent/rooted-list.js --mode not-hackable');
+  ns.tprint('  run agent/rooted-list.js --mode not-hackable --debug');
 }
