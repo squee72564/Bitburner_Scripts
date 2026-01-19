@@ -1,4 +1,4 @@
-import { NS } from '@ns';
+import { AutocompleteData, NS } from '@ns';
 import { ServerBfs } from '/lib/bfs';
 import { isHome, getServerAvailableRam, isServerHackable } from '/lib/host';
 import {
@@ -44,6 +44,20 @@ const DEFAULT_OPTIONS: [string, string | number | boolean | string[]][] = [
   ['hack-fraction', 0.1],
   ['min-hack-chance', 0.5],
 ];
+
+export function autocomplete(data: AutocompleteData, args: string[]): string[] {
+  data.flags(DEFAULT_OPTIONS);
+  const lastArg = args.at(-1);
+  if (lastArg === '--mode') {
+    return [...SCORE_MODES];
+  }
+  const prevArg = args.length > 1 ? args[args.length - 2] : undefined;
+  if (prevArg === '--mode') {
+    const prefix = lastArg ?? '';
+    return SCORE_MODES.filter((mode) => mode.startsWith(prefix));
+  }
+  return [];
+}
 
 function parseOptions(ns: NS): OrchestratorOptions | null {
   const flags = ns.flags(DEFAULT_OPTIONS);
