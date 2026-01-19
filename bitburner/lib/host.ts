@@ -4,6 +4,10 @@ export function isHome(server: string): boolean {
   return server === 'home';
 }
 
-export function pickTarget(ns: NS, flags: { server?: string; s?: string }): string {
-  return flags.server || flags.s || ns.getHostname();
+export function getServerAvailableRam(ns: NS, host: string): number {
+  return ns.getServerMaxRam(host) - ns.getServerUsedRam(host);
+}
+
+export function isServerHackable(ns: NS, host: string): boolean {
+  return ns.getServerRequiredHackingLevel(host) <= ns.getHackingLevel();
 }
