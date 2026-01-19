@@ -1,4 +1,3 @@
-
 import { NS } from '@ns';
 
 export type PortQueueValidator<T> = (value: unknown) => value is T;

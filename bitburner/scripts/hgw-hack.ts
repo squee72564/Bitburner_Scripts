@@ -12,7 +12,9 @@ const DEFAULT_OPTIONS: [string, string | number | boolean][] = [
 export async function main(ns: NS): Promise<void> {
   const flags = ns.flags(DEFAULT_OPTIONS);
   if (flags.help || flags.h) {
-    ns.tprint(`Usage: run ${ns.getScriptName()} --target <host> --port <port> --threads <n> [--runner <host>]`);
+    ns.tprint(
+      `Usage: run ${ns.getScriptName()} --target <host> --port <port> --threads <n> [--runner <host>]`,
+    );
     return;
   }
 
