@@ -17,63 +17,74 @@ const PORT_OPENERS: Array<{
 
 export async function main(ns: NS): Promise<void> {
   ns.disableLog('scan');
+  ns.disableLog('sleep');
+
   const flags = ns.flags([
     ['help', false],
     ['h', false],
+    ['daemon', false],
   ]);
+
   if (flags.help || flags.h) {
     ns.tprint('Usage: run scripts/root-all.js');
     return;
   }
+
   const availableOpeners = getAvailablePortOpeners(ns);
   const rooted: string[] = [];
+  
+  do {
+    const dfs = new ServerDfs(ns, {
+      shouldAct: (_ns: NS, host: string) => {
+        if (ns.hasRootAccess(host) || isHome(host)) {
+          return false;
+        }
+        const requiredPorts = ns.getServerNumPortsRequired(host);
+        return availableOpeners.length >= requiredPorts;
+      },
+      onVisit: (_ns: NS, host: string) => {
+        const requiredPorts = ns.getServerNumPortsRequired(host);
+        if (requiredPorts > 0) {
+          openPorts(ns, host, requiredPorts, availableOpeners);
+        }
+        if (ns.nuke(host)) {
+          rooted.push(host);
+          ns.tprint(`nuked ${host}`);
+        }
+      },
+    });
 
-  const dfs = new ServerDfs(ns, {
-    shouldAct: (_ns: NS, host: string) => {
-      if (ns.hasRootAccess(host) || isHome(host)) {
-        return false;
-      }
-      const requiredPorts = ns.getServerNumPortsRequired(host);
-      return availableOpeners.length >= requiredPorts;
-    },
-    onVisit: (_ns: NS, host: string) => {
-      const requiredPorts = ns.getServerNumPortsRequired(host);
-      if (requiredPorts > 0) {
-        openPorts(ns, host, requiredPorts, availableOpeners);
-      }
-      if (ns.nuke(host)) {
-        rooted.push(host);
-        ns.tprint(`nuked ${host}`);
-      }
-    },
-  });
+    dfs.traverse();
 
-  dfs.traverse();
+    if (!flags.daemon) {
+      const el = React.createElement;
+      const items: ExpandableItem[] = [
+        {
+          id: 'rooted',
+          header: el('span', null, `Rooted (${ns.formatNumber(rooted.length)})`),
+          content:
+            rooted.length === 0
+              ? el('div', null, 'No servers rooted.')
+              : el(
+                  'div',
+                  null,
+                  rooted.map((host) => el('div', { key: host }, host)),
+                ),
+        },
+      ];
 
-  const el = React.createElement;
-  const items: ExpandableItem[] = [
-    {
-      id: 'rooted',
-      header: el('span', null, `Rooted (${ns.formatNumber(rooted.length)})`),
-      content:
-        rooted.length === 0
-          ? el('div', null, 'No servers rooted.')
-          : el(
-              'div',
-              null,
-              rooted.map((host) => el('div', { key: host }, host)),
-            ),
-    },
-  ];
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ns.tprintRaw(el(ExpandableList, { items }) as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ns.tprintRaw(el(ExpandableList, { items }) as any);
+    }
+    await ns.sleep(1000);
+  } while (flags.daemon)
 }
 
 export function autocomplete(data: AutocompleteData): string[] {
   data.flags([
     ['help', false],
     ['h', false],
+    ['daemon', false],
   ]);
   return [];
 }
