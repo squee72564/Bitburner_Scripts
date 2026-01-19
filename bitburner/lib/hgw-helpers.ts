@@ -12,7 +12,7 @@ export const SCORE_MODES = [
   'moneyChanceTime',
 ] as const;
 
-export type ScoringFunction = typeof SCORE_MODES[number];
+export type ScoringFunction = (typeof SCORE_MODES)[number];
 
 export type HGWDecisionOptions = {
   securityEpsilon?: number;
@@ -89,16 +89,20 @@ export function getHGWCycleOperation(
   opts: HGWDecisionOptions = {},
 ): HGW_CYCLE_OP {
   const server = ns.getServer(target);
+  const hackDifficulty = server.hackDifficulty ?? ns.getServerSecurityLevel(target);
+  const minDifficulty = server.minDifficulty ?? ns.getServerMinSecurityLevel(target);
+  const moneyMax = server.moneyMax ?? ns.getServerMaxMoney(target);
+  const moneyAvailable = server.moneyAvailable ?? ns.getServerMoneyAvailable(target);
   const player = ns.getPlayer();
   const securityEpsilon = opts.securityEpsilon ?? 1;
   const moneyThreshold = opts.moneyThreshold ?? 0.9;
   const minHackChance = opts.minHackChance ?? 0.5;
 
-  if (server.hackDifficulty > server.minDifficulty + securityEpsilon) {
+  if (hackDifficulty > minDifficulty + securityEpsilon) {
     return 'weaken';
   }
 
-  if (server.moneyMax > 0 && server.moneyAvailable < server.moneyMax * moneyThreshold) {
+  if (moneyMax > 0 && moneyAvailable < moneyMax * moneyThreshold) {
     return 'grow';
   }
 
@@ -157,6 +161,9 @@ export function getHGWThreadPlan(
   }
 
   const server = ns.getServer(target);
+  const hackDifficulty = server.hackDifficulty ?? ns.getServerSecurityLevel(target);
+  const minDifficulty = server.minDifficulty ?? ns.getServerMinSecurityLevel(target);
+  const moneyMax = server.moneyMax ?? ns.getServerMaxMoney(target);
   const player = ns.getPlayer();
   const cores = ns.getServer(runnerHost).cpuCores;
   const hackFraction = opts.hackFraction ?? 0.1;
@@ -186,9 +193,7 @@ export function getHGWThreadPlan(
       };
     }
     case 'grow': {
-      const desiredThreads = Math.ceil(
-        growThreads(ns, server, player, server.moneyMax, cores),
-      );
+      const desiredThreads = Math.ceil(growThreads(ns, server, player, moneyMax, cores));
       const threads = clampThreads(desiredThreads, maxThreads);
       return {
         op,
@@ -212,7 +217,7 @@ export function getHGWThreadPlan(
           reason: 'weaken_zero',
         };
       }
-      const desiredThreads = Math.ceil((server.hackDifficulty - server.minDifficulty) / perThread);
+      const desiredThreads = Math.ceil((hackDifficulty - minDifficulty) / perThread);
       const threads = clampThreads(desiredThreads, maxThreads);
       return {
         op,

@@ -1,10 +1,6 @@
 import { NS } from '@ns';
 import { ServerBfs } from '/lib/bfs';
-import {
-  isHome,
-  getServerAvailableRam,
-  isServerHackable,
-} from "/lib/host";
+import { isHome, getServerAvailableRam, isServerHackable } from '/lib/host';
 import {
   scoreTarget,
   ScoringFunction,
@@ -13,23 +9,18 @@ import {
   getHGWThreadPlan,
   HGWScripts,
 } from '/lib/hgw-helpers';
-import {
-  PortQueue,
-} from '/lib/port-queue';
-import {
-  PriorityQueue,
-} from '/lib/priority-queue';
-
+import { PortQueue } from '/lib/port-queue';
+import { PriorityQueue } from '/lib/priority-queue';
 
 interface RunnerMetadata {
   name: string;
   ram: number;
-};
+}
 
 interface OrchestratorOptions {
   includeHome: boolean;
   port: number;
-  mode: ScoringFunction; 
+  mode: ScoringFunction;
   securityEpsilon: number;
   moneyThreshold: number;
   hackFraction: number;
@@ -42,34 +33,34 @@ const HGW_SCRIPTS: HGWScripts = {
   weaken: '/scripts/hgw-weaken.js',
 };
 
-const DEFAULT_OPTIONS = [
-  ["include-home", false],
-  ["help", false],
-  ["h", false],
-  ["port", 1],
-  ["mode", "moneyChanceTime"],
-  ["security-epsilon", 1],
-  ["money-threshold", 0.9],
-  ["hack-fraction", 0.1],
-  ["min-hack-chance", 0.5],
+const DEFAULT_OPTIONS: [string, string | number | boolean | string[]][] = [
+  ['include-home', false],
+  ['help', false],
+  ['h', false],
+  ['port', 1],
+  ['mode', 'moneyChanceTime'],
+  ['security-epsilon', 1],
+  ['money-threshold', 0.9],
+  ['hack-fraction', 0.1],
+  ['min-hack-chance', 0.5],
 ];
 
 function parseOptions(ns: NS): OrchestratorOptions | null {
   const flags = ns.flags(DEFAULT_OPTIONS);
   const usageMessage = `Usage: run scripts/${ns.getScriptName()} [--include-home] [--port] [--mode ${SCORE_MODES.join('|')}] [--security-epsilon] [--money-threshold] [--hack-fraction] [--min-hack-chance]`;
-  
+
   if (flags.help || flags.h) {
     ns.tprint(usageMessage);
     return null;
   }
 
-  const includeHome = Boolean(flags["include-home"]);
+  const includeHome = Boolean(flags['include-home']);
   const port = Math.max(1, Number(flags.port));
   const mode = String(flags.mode) as ScoringFunction;
-  const securityEpsilon = Math.max(0, Number(flags["security-epsilon"]));
-  const moneyThreshold = clampRatio(flags["money-threshold"]);
-  const hackFraction = clampRatio(flags["hack-fraction"]);
-  const minHackChance = clampRatio(flags["min-hack-chance"]);
+  const securityEpsilon = Math.max(0, Number(flags['security-epsilon']));
+  const moneyThreshold = clampRatio(flags['money-threshold']);
+  const hackFraction = clampRatio(flags['hack-fraction']);
+  const minHackChance = clampRatio(flags['min-hack-chance']);
 
   if (!SCORE_MODES.includes(mode)) {
     ns.tprint('Invalid scoring function: ' + mode);
@@ -89,7 +80,7 @@ function parseOptions(ns: NS): OrchestratorOptions | null {
 }
 
 export async function main(ns: NS): Promise<void> {
-  ns.disableLog("ALL");
+  ns.disableLog('ALL');
 
   const opts: OrchestratorOptions | null = parseOptions(ns);
   if (!opts) {
@@ -108,19 +99,16 @@ export async function main(ns: NS): Promise<void> {
 
   const currentlyTargetedServers: Set<string> = new Set();
   const runnerQueue = new PriorityQueue<RunnerMetadata>(
-    (a: RunnerMetadata, b: RunnerMetadata) => b.ram - a.ram
+    (a: RunnerMetadata, b: RunnerMetadata) => b.ram - a.ram,
   );
-  const portReader: PortQueue<HGWCompletionPayload> = new PortQueue(
-    ns,
-    opts.port
-  );
+  const portReader: PortQueue<HGWCompletionPayload> = new PortQueue(ns, opts.port);
 
   while (true) {
     // Available targets sorted by scoring function
     const { availableTargets, availableRunners } = getRunnersAndTargets(
       ns,
       opts,
-      currentlyTargetedServers
+      currentlyTargetedServers,
     );
 
     runnerQueue.clear();
@@ -129,7 +117,6 @@ export async function main(ns: NS): Promise<void> {
     }
 
     for (const target of availableTargets) {
-
       const runner = runnerQueue.pop();
       if (!runner) {
         break;
@@ -214,34 +201,41 @@ export async function main(ns: NS): Promise<void> {
   }
 }
 
-function getRunnersAndTargets(ns: NS, opts: OrchestratorOptions, currentlyTargetedServers: Set<string>) {
-  const allServers = getAllServersMetadata(
-    ns, opts
-  );
+function getRunnersAndTargets(
+  ns: NS,
+  opts: OrchestratorOptions,
+  currentlyTargetedServers: Set<string>,
+) {
+  const allServers = getAllServersMetadata(ns, opts);
   const purchasedServersList = ns.getPurchasedServers();
   const purchasedServersSet = new Set(purchasedServersList);
 
   // Filter out non-hackable servers and sort by best score
-  const availableTargets = allServers.slice()
-    .filter((target) =>
-      !isHome(target.name) &&
-      !purchasedServersSet.has(target.name) &&
-      ns.getServerMaxMoney(target.name) > 0 &&
-      isServerHackable(ns, target.name) &&
-      !currentlyTargetedServers.has(target.name)
+  const availableTargets = allServers
+    .slice()
+    .filter(
+      (target) =>
+        !isHome(target.name) &&
+        !purchasedServersSet.has(target.name) &&
+        ns.getServerMaxMoney(target.name) > 0 &&
+        isServerHackable(ns, target.name) &&
+        !currentlyTargetedServers.has(target.name),
     )
     .sort((a, b) => scoreTarget(ns, b.name, opts.mode) - scoreTarget(ns, a.name, opts.mode));
 
   // Filter out all non-rooted servers and sort by RAM
-  const purchasedServers: RunnerMetadata[] =
-    purchasedServersList.map((pserv: string) => ({name: pserv, ram: getServerAvailableRam(ns, pserv)}));
+  const purchasedServers: RunnerMetadata[] = purchasedServersList.map((pserv: string) => ({
+    name: pserv,
+    ram: getServerAvailableRam(ns, pserv),
+  }));
 
-  const availableRunners = [...allServers, ...purchasedServers]
-    .filter((runner) => runner.ram > 0 && ns.hasRootAccess(runner.name));
+  const availableRunners = [...allServers, ...purchasedServers].filter(
+    (runner) => runner.ram > 0 && ns.hasRootAccess(runner.name),
+  );
 
   return {
     availableTargets,
-    availableRunners
+    availableRunners,
   };
 }
 
@@ -251,21 +245,20 @@ function getAllServersMetadata(ns: NS, opts: OrchestratorOptions): RunnerMetadat
   const bfs = new ServerBfs(ns, {
     shouldAct: (_ns, host) => {
       if (isHome(host) && !opts.includeHome) {
-        return false; 
+        return false;
       }
       return true;
     },
     onVisit: (ns, host) => {
       servers.push({
         name: host,
-        ram: getServerAvailableRam(ns, host)
+        ram: getServerAvailableRam(ns, host),
       });
     },
   });
   bfs.traverse('home');
   return servers;
 }
-
 
 function clampRatio(value: unknown): number {
   const parsed = Number(value);
