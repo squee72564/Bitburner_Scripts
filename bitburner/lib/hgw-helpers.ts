@@ -107,7 +107,7 @@ export function getHGWCycleOperation(
   }
 
   const chance = hackChance(ns, server, player);
-  if (chance >= minHackChance) {
+  if (chance >= minHackChance || hackDifficulty == 0) {
     return 'hack';
   }
 
