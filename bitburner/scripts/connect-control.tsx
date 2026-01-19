@@ -4,6 +4,7 @@ import { ServerDfs } from 'lib/dfs';
 import { ResizablePanel } from '/ui/components/ResizablePanel';
 import { FloatingPanel } from '/ui/components/FloatingPanel';
 import { Button } from '/ui/components/Button';
+import { Input } from '/ui/components/Input';
 import { colors, font, spacing } from '/ui/theme';
 
 type ConnectControlProps = {
@@ -77,6 +78,16 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
   const [currentTarget, setCurrentTarget] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState<boolean>(false);
   const [hoveredServer, setHoveredServer] = React.useState<string | null>(null);
+  const [filterText, setFilterText] = React.useState<string>('');
+
+  const servers = React.useMemo(() => {
+    const allServers = Array.from(adj.keys());
+    const normalized = filterText.trim().toLowerCase();
+    if (!normalized) {
+      return allServers;
+    }
+    return allServers.filter((server) => server.toLowerCase().includes(normalized));
+  }, [adj, filterText]);
 
   React.useEffect(() => {
     if (!currentTarget) {
@@ -105,8 +116,18 @@ function ConnectControl(props: ConnectControlProps): JSX.Element {
             <div style={{ ...styles.sectionWrap, ...styles.serversSection }}>
               <div style={styles.sectionTitle}>Servers</div>
               <div style={{ ...styles.card, ...styles.sectionCard }}>
+                <div style={styles.searchRow}>
+                  <Input
+                    value={filterText}
+                    onChange={setFilterText}
+                    placeholder="Filter servers..."
+                  />
+                </div>
                 <div style={styles.scrollArea}>
-                  {Array.from(adj.keys()).map((server) => (
+                  {servers.length === 0 && (
+                    <div style={styles.emptyState}>No servers match the filter.</div>
+                  )}
+                  {servers.map((server) => (
                     <div
                       key={server}
                       style={{
@@ -245,6 +266,9 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     minHeight: 0,
   },
+  searchRow: {
+    marginBottom: spacing.sm,
+  },
   scrollArea: {
     flex: 1,
     minHeight: 0,
@@ -282,5 +306,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: font.size,
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
+  },
+  emptyState: {
+    color: colors.textDim,
+    fontSize: font.size,
+    padding: `${spacing.xs} ${spacing.sm}`,
   },
 };
