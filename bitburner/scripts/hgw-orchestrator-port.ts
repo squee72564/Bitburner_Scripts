@@ -150,7 +150,7 @@ export async function main(ns: NS): Promise<void> {
       }
 
       const script = HGW_SCRIPTS[plan.op];
-      await ns.scp(script, runner.name);
+      ns.scp(script, runner.name);
 
       const pid = ns.exec(
         script,
