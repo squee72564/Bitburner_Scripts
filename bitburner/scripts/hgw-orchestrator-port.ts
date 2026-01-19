@@ -117,6 +117,8 @@ export async function main(ns: NS): Promise<void> {
   );
   const portReader: PortQueue<HGWCompletionPayload> = new PortQueue(ns, opts.port);
 
+  ns.clearPort(opts.port);
+
   while (true) {
     // Available targets sorted by scoring function
     const { availableTargets, availableRunners } = getRunnersAndTargets(
@@ -211,7 +213,7 @@ export async function main(ns: NS): Promise<void> {
       );
     }
 
-    await ns.sleep(500);
+    await ns.sleep(2000);
   }
 }
 
