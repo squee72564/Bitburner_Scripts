@@ -89,10 +89,22 @@ function parseOptions(ns: NS): OrchestratorOptions | null {
 }
 
 export async function main(ns: NS): Promise<void> {
+  ns.disableLog("ALL");
+
   const opts: OrchestratorOptions | null = parseOptions(ns);
   if (!opts) {
     return;
   }
+
+  ns.printf(
+    'Starting orchestrator port=%d mode=%s thresholds: sec=%.2f money=%.2f hack=%.2f chance=%.2f',
+    opts.port,
+    opts.mode,
+    opts.securityEpsilon,
+    opts.moneyThreshold,
+    opts.hackFraction,
+    opts.minHackChance,
+  );
 
   const currentlyTargetedServers: Set<string> = new Set();
   const runnerQueue = new PriorityQueue<RunnerMetadata>(
@@ -138,6 +150,7 @@ export async function main(ns: NS): Promise<void> {
 
       const script = HGW_SCRIPTS[plan.op];
       await ns.scp(script, runner.name);
+
       const pid = ns.exec(
         script,
         runner.name,
@@ -153,13 +166,30 @@ export async function main(ns: NS): Promise<void> {
       );
 
       if (pid === 0) {
+        ns.printf(
+          'Exec failed op=%s target=%s runner=%s threads=%d',
+          plan.op,
+          target.name,
+          runner.name,
+          plan.threads,
+        );
+
         runnerQueue.push(runner);
         continue;
       }
 
       currentlyTargetedServers.add(target.name);
 
-      const updatedRam = getServerAvailableRam(ns, runner.name);
+      ns.printf(
+        'Dispatched op=%s target=%s runner=%s threads=%d',
+        plan.op,
+        target.name,
+        runner.name,
+        plan.threads,
+      );
+
+      const updatedRam = Math.max(0, runner.ram - plan.threads * plan.scriptRam);
+
       if (updatedRam > 0) {
         runnerQueue.push({
           name: runner.name,
@@ -168,11 +198,19 @@ export async function main(ns: NS): Promise<void> {
       }
     }
 
-    await portReader.nextWrite();
-    
     for (const completedPayload of portReader.drain()) {
       currentlyTargetedServers.delete(completedPayload.host);
+      ns.printf(
+        'Completed op=%s target=%s threads=%d runner=%s result=%.2f',
+        completedPayload.op,
+        completedPayload.host,
+        completedPayload.threads,
+        completedPayload.runner ?? 'unknown',
+        completedPayload.result,
+      );
     }
+
+    await ns.sleep(500);
   }
 }
 
@@ -180,15 +218,23 @@ function getRunnersAndTargets(ns: NS, opts: OrchestratorOptions, currentlyTarget
   const allServers = getAllServersMetadata(
     ns, opts
   );
+  const purchasedServersList = ns.getPurchasedServers();
+  const purchasedServersSet = new Set(purchasedServersList);
 
   // Filter out non-hackable servers and sort by best score
   const availableTargets = allServers.slice()
-    .filter((target) => !isHome(target.name) && isServerHackable(ns, target.name) && !currentlyTargetedServers.has(target.name))
+    .filter((target) =>
+      !isHome(target.name) &&
+      !purchasedServersSet.has(target.name) &&
+      ns.getServerMaxMoney(target.name) > 0 &&
+      isServerHackable(ns, target.name) &&
+      !currentlyTargetedServers.has(target.name)
+    )
     .sort((a, b) => scoreTarget(ns, b.name, opts.mode) - scoreTarget(ns, a.name, opts.mode));
 
   // Filter out all non-rooted servers and sort by RAM
   const purchasedServers: RunnerMetadata[] =
-    ns.getPurchasedServers().map((pserv: string) => ({name: pserv, ram: getServerAvailableRam(ns, pserv)}));
+    purchasedServersList.map((pserv: string) => ({name: pserv, ram: getServerAvailableRam(ns, pserv)}));
 
   const availableRunners = [...allServers, ...purchasedServers]
     .filter((runner) => runner.ram > 0 && ns.hasRootAccess(runner.name));
