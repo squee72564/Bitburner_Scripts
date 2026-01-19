@@ -32,7 +32,7 @@ export async function main(ns: NS): Promise<void> {
 
   const availableOpeners = getAvailablePortOpeners(ns);
   const rooted: string[] = [];
-  
+
   do {
     const dfs = new ServerDfs(ns, {
       shouldAct: (_ns: NS, host: string) => {
@@ -77,7 +77,7 @@ export async function main(ns: NS): Promise<void> {
       ns.tprintRaw(el(ExpandableList, { items }) as any);
     }
     await ns.sleep(1000);
-  } while (flags.daemon)
+  } while (flags.daemon);
 }
 
 export function autocomplete(data: AutocompleteData): string[] {

@@ -44,6 +44,34 @@ const DEFAULT_OPTIONS: [string, string | number | boolean | string[]][] = [
   ['hack-fraction', 0.1],
   ['min-hack-chance', 0.5],
 ];
+const USAGE_INDENT = '                                            ';
+
+function buildUsageMessage(scriptName: string): string {
+  return (
+    `\nusage: run ${scriptName} [--include-home] [--port <n>] [--mode <score>]\n` +
+    `${USAGE_INDENT}[--security-epsilon <n>] [--money-threshold <ratio>]\n` +
+    `${USAGE_INDENT}[--hack-fraction <ratio>] [--min-hack-chance <ratio>]\n` +
+    `${USAGE_INDENT}[--help]`
+  );
+}
+
+function buildHelpMessage(scriptName: string): string {
+  const usageMessage = buildUsageMessage(scriptName);
+  return (
+    `${usageMessage}\n\n` +
+    'HGW orchestrator that launches hack/grow/weaken scripts and listens for their completion status on a port.\n\n' +
+    'Options:\n' +
+    '  --include-home            Include home as a runner (default: false)\n' +
+    '  --port <n>                Completion port number (default: 1)\n' +
+    `  --mode <score>            Scoring mode: ${SCORE_MODES.join('|')}\n` +
+    '                            (default: moneyChanceTime)\n' +
+    '  --security-epsilon <n>    Allowed security above minimum before weakening (default: 1)\n' +
+    '  --money-threshold <ratio> Minimum money ratio before growing, 0..1 (default: 0.9)\n' +
+    '  --hack-fraction <ratio>   Fraction of max money to hack per cycle, 0..1 (default: 0.1)\n' +
+    '  --min-hack-chance <ratio> Minimum hack chance to consider a target, 0..1 (default: 0.5)\n' +
+    '  -h, --help                Show this help message'
+  );
+}
 
 export function autocomplete(data: AutocompleteData, args: string[]): string[] {
   data.flags(DEFAULT_OPTIONS);
@@ -61,10 +89,11 @@ export function autocomplete(data: AutocompleteData, args: string[]): string[] {
 
 function parseOptions(ns: NS): OrchestratorOptions | null {
   const flags = ns.flags(DEFAULT_OPTIONS);
-  const usageMessage = `Usage: run scripts/${ns.getScriptName()} [--include-home] [--port] [--mode ${SCORE_MODES.join('|')}] [--security-epsilon] [--money-threshold] [--hack-fraction] [--min-hack-chance]`;
+  const usageMessage = buildUsageMessage(ns.getScriptName());
+  const helpMessage = buildHelpMessage(ns.getScriptName());
 
   if (flags.help || flags.h) {
-    ns.tprint(usageMessage);
+    ns.tprint(helpMessage);
     return null;
   }
 
