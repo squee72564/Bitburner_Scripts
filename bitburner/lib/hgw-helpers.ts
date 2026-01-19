@@ -119,10 +119,21 @@ export function getHGWThreadPlan(
 ): HGWThreadPlan {
   const op = getHGWCycleOperation(ns, target, opts);
   const script = scripts[op];
-  const scriptRam = ns.getScriptRam(script, runnerHost);
+  const scriptRam = ns.getScriptRam(script, 'home');
   const availableRam = opts.availableRam ?? getServerAvailableRam(ns, runnerHost);
 
-  if (!Number.isFinite(scriptRam) || scriptRam <= 0 || availableRam <= 0) {
+  if (!Number.isFinite(scriptRam) || scriptRam <= 0) {
+    return {
+      op,
+      threads: 0,
+      maxThreads: 0,
+      scriptRam,
+      expectedSecurityDelta: 0,
+      reason: 'missing_script',
+    };
+  }
+
+  if (availableRam <= 0) {
     return {
       op,
       threads: 0,
