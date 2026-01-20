@@ -1,7 +1,7 @@
 import { AutocompleteData, NS } from '@ns';
 import { getServerAvailableRam } from '/lib/host';
 
-const RAM_SCRIPT = "scripts/share-ram-worker.js";
+const RAM_SCRIPT = 'scripts/share-ram-worker.js';
 
 interface ShareRamScriptOpts {
   ramUsageRatio: number;
@@ -14,10 +14,10 @@ const defaultFlags: [string, string | number | boolean | string[]][] = [
 ];
 
 function printHelp(ns: NS): void {
-  ns.tprint(`usage: ${ns.getScriptName()} [--ramUsageRatio] [--host]`); 
+  ns.tprint(`usage: ${ns.getScriptName()} [--ramUsageRatio] [--host]`);
 }
 
-function parseArgs(ns: NS): ShareRamScriptOpts | null{
+function parseArgs(ns: NS): ShareRamScriptOpts | null {
   const flags = ns.flags(defaultFlags);
 
   if (flags.help || flags.h) {
@@ -40,7 +40,7 @@ export function autocomplete(data: AutocompleteData): string[] {
 }
 
 export async function main(ns: NS): Promise<void> {
-  ns.disableLog("ALL");
+  ns.disableLog('ALL');
   const opts = parseArgs(ns);
   if (!opts) return;
 
@@ -66,11 +66,11 @@ export async function main(ns: NS): Promise<void> {
   if (numThreads < 1) {
     return;
   }
-  
+
   ns.kill(RAM_SCRIPT, host);
   const ret = ns.exec(RAM_SCRIPT, host, numThreads);
 
   if (ret === 0) {
-    ns.tprint("Failed to launch RAM share script!");
+    ns.tprint('Failed to launch RAM share script!');
   }
 }
