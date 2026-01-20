@@ -47,6 +47,13 @@ export async function main(ns: NS): Promise<void> {
   cheatyDocument.body.appendChild(overlay);
 
   let shouldExit = false;
+  const cleanup = () => {
+    if (!overlay.isConnected) return;
+    ReactDOM.unmountComponentAtNode(overlay);
+    overlay.remove();
+  };
+  ns.atExit(cleanup);
+
   ReactDOM.render(
     <React.StrictMode>
       <ServerControl
@@ -63,8 +70,7 @@ export async function main(ns: NS): Promise<void> {
   while (!shouldExit) {
     await ns.asleep(250);
   }
-  ReactDOM.unmountComponentAtNode(overlay);
-  overlay.remove();
+  cleanup();
 }
 
 function ServerControl(props: ServerControlProps): JSX.Element {

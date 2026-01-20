@@ -51,6 +51,13 @@ export async function main(ns: NS): Promise<void> {
   cheatyDocument.body.appendChild(overlay);
 
   let shouldExit = false;
+  const cleanup = () => {
+    if (!overlay.isConnected) return;
+    ReactDOM.unmountComponentAtNode(overlay);
+    overlay.remove();
+  };
+  ns.atExit(cleanup);
+
   ReactDOM.render(
     <React.StrictMode>
       <ConnectControl
@@ -68,8 +75,7 @@ export async function main(ns: NS): Promise<void> {
     await ns.asleep(250);
   }
 
-  ReactDOM.unmountComponentAtNode(overlay);
-  overlay.remove();
+  cleanup();
 }
 
 function ConnectControl(props: ConnectControlProps): JSX.Element {
