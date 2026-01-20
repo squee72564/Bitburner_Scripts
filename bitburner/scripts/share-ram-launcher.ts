@@ -67,6 +67,7 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
   
+  ns.kill(RAM_SCRIPT, host);
   const ret = ns.exec(RAM_SCRIPT, host, numThreads);
 
   if (ret === 0) {
