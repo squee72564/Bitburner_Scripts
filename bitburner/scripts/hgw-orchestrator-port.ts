@@ -263,6 +263,7 @@ function getRunnersAndTargets(
         !isHome(target.name) &&
         !purchasedServersSet.has(target.name) &&
         ns.getServerMaxMoney(target.name) > 0 &&
+        ns.hasRootAccess(target.name) && // we need root access for weaken/grow
         isServerHackable(ns, target.name) &&
         !currentlyTargetedServers.has(target.name),
     )
