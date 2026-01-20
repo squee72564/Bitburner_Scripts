@@ -54,7 +54,7 @@ export async function main(ns: NS): Promise<void> {
     ns.scp([RAM_SCRIPT], host);
   }
 
-  while (ns.scriptRunning(RAM_SCRIPT, host) {
+  while (ns.scriptRunning(RAM_SCRIPT, host)) {
     ns.kill(RAM_SCRIPT, host);
   }
 
