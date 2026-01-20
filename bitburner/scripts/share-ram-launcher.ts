@@ -54,11 +54,17 @@ export async function main(ns: NS): Promise<void> {
     ns.scp([RAM_SCRIPT], host);
   }
 
+  while (ns.scriptRunning(RAM_SCRIPT, host) {
+    ns.kill(RAM_SCRIPT, host);
+  }
+
   const shareRamScriptCost = ns.getScriptRam(RAM_SCRIPT, host);
+
   if (!Number.isFinite(shareRamScriptCost) || shareRamScriptCost <= 0) {
     ns.tprint(`Failed to determine RAM cost for ${RAM_SCRIPT}. Is it on ${host}?`);
     return;
   }
+
   const availableRAM = getServerAvailableRam(ns, host);
   const desiredRAM = ns.getServerMaxRam(host) * opts.ramUsageRatio;
   const actualRAM = Math.min(availableRAM, desiredRAM);
@@ -67,7 +73,6 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
 
-  ns.kill(RAM_SCRIPT, host);
   const ret = ns.exec(RAM_SCRIPT, host, numThreads);
 
   if (ret === 0) {
