@@ -30,10 +30,9 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
 
-  const availableOpeners = getAvailablePortOpeners(ns);
-  const rooted: string[] = [];
-
   do {
+    const availableOpeners = getAvailablePortOpeners(ns);
+    const rooted: string[] = [];
     const dfs = new ServerDfs(ns, {
       shouldAct: (_ns: NS, host: string) => {
         if (ns.hasRootAccess(host) || isHome(host)) {
