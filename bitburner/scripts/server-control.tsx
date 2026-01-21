@@ -108,6 +108,7 @@ function ServerControl(props: ServerControlProps): JSX.Element {
           <div style={styles.value}>
             {ns.formatRam(row.usedRam)} / {ns.formatRam(row.maxRam)}
           </div>
+          <div style={styles.value}>{ns.formatPercent(row.usedRam / row.maxRam)}%</div>
           <div style={styles.value}>{row.scriptCount} scripts</div>
         </>
       ),
@@ -215,6 +216,14 @@ function ServerControl(props: ServerControlProps): JSX.Element {
             <div style={styles.muted}>
               Total RAM: {ns.formatRam(rows.reduce((sum, row) => sum + row.maxRam, 0))}
             </div>
+            <div style={styles.muted}>
+              % in use:{' '}
+              {ns.formatPercent(
+                rows.length
+                  ? rows.reduce((u, r) => u + r.usedRam, 0) / rows.reduce((u, r) => u + r.maxRam, 0)
+                  : 0,
+              )}
+            </div>
           </div>
         </ResizablePanel>
       </FloatingPanel>
@@ -255,7 +264,10 @@ function renderConfirmModal(
         message={`Buy ${ns.formatRam(confirm.ram)} for $${ns.formatNumber(confirm.cost)}?`}
         onCancel={ctx.onClose}
         onConfirm={() => {
-          const hostname = ns.purchaseServer(ctx.prefix, confirm.ram);
+          const hostname = ns.purchaseServer(
+            nextPurchasedName(ctx.prefix, ns.getPurchasedServers()),
+            confirm.ram,
+          );
           if (hostname) {
             ns.tprint(`SUCCESS purchased ${hostname} (${ns.formatRam(confirm.ram)})`);
           } else {
@@ -314,6 +326,17 @@ function printHelp(ns: NS): void {
   ns.tprint('Examples:');
   ns.tprint('  run scripts/server-control.js');
   ns.tprint('  run scripts/server-control.js --prefix pserv');
+}
+
+function nextPurchasedName(prefix: string, existing: string[]): string {
+  const used = new Set(existing);
+  for (let i = 1; i <= 9999; i += 1) {
+    const name = `${prefix}-${String(i).padStart(3, '0')}`;
+    if (!used.has(name)) {
+      return name;
+    }
+  }
+  return `${prefix}-${Date.now()}`;
 }
 
 const styles: Record<string, React.CSSProperties> = {
