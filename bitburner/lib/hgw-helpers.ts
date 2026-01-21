@@ -47,6 +47,10 @@ export type HGWCompletionPayload = {
   runner?: string;
   result: number;
   ts: number;
+  batchId?: string;
+  batchStep?: number;
+  batchSteps?: number;
+  delayMs?: number;
 };
 
 export function scoreTarget(ns: NS, host: string, mode: ScoringFunction): number {
