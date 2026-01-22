@@ -1,5 +1,5 @@
 import { AutocompleteData, NS } from '@ns';
-import { killOtherInstances } from '/lib/process';
+import { killOtherInstances } from '/lib/core/process';
 
 const FLAG_SCHEMA: [string, string | number | boolean][] = [
   ['interval', 5000],

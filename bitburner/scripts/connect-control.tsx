@@ -1,6 +1,6 @@
 import { NS } from '@ns';
 import { React, ReactDOM, cheatyDocument } from '/ui/react';
-import { ServerDfs } from 'lib/dfs';
+import { ServerDfs } from 'lib/core/dfs';
 import { ResizablePanel } from '/ui/components/ResizablePanel';
 import { FloatingPanel } from '/ui/components/FloatingPanel';
 import { Button } from '/ui/components/Button';

@@ -1,5 +1,5 @@
 import { NS } from '@ns';
-import { ServerDfs } from 'lib/dfs';
+import { ServerDfs } from 'lib/core/dfs';
 
 interface Options {
   dryRun: boolean;

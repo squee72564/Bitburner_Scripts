@@ -1,5 +1,5 @@
 import { NS } from '@ns';
-import { isHome } from '/lib/host';
+import { isHome } from '/lib/core/host';
 import {
   growThreads,
   growTime,
@@ -7,7 +7,7 @@ import {
   hackPercent,
   hackTime,
   weakenTime,
-} from '/lib/hacking-formulas';
+} from '/lib/hgw/hacking-formulas';
 import { React, ReactDOM, cheatyDocument } from '/ui/react';
 import { ResizablePanel } from '/ui/components/ResizablePanel';
 import { Button } from '/ui/components/Button';
@@ -16,7 +16,7 @@ import { Select } from '/ui/components/Select';
 import { FloatingPanel } from '/ui/components/FloatingPanel';
 import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
 import { colors, font, spacing } from '/ui/theme';
-import { ServerDfs } from '/lib/dfs';
+import { ServerDfs } from '/lib/core/dfs';
 
 type ServerMonitorProps = {
   ns: NS;

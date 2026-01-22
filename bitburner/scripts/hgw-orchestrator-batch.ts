@@ -1,6 +1,6 @@
 import { AutocompleteData, NS, Person, Server } from '@ns';
-import { ServerBfs } from '/lib/bfs';
-import { isHome, getServerAvailableRam, isServerHackable } from '/lib/host';
+import { ServerBfs } from '/lib/core/bfs';
+import { isHome, getServerAvailableRam, isServerHackable } from '/lib/core/host';
 import {
   scoreTarget,
   ScoringFunction,
@@ -9,7 +9,7 @@ import {
   HGWScripts,
   HGW_CYCLE_OP,
   getHGWCycleOperation,
-} from '/lib/hgw-helpers';
+} from '/lib/hgw/hgw-helpers';
 import {
   growAmount,
   growThreads,
@@ -18,10 +18,10 @@ import {
   hackPercent,
   hackTime,
   weakenTime,
-} from '/lib/hacking-formulas';
-import { PortQueue } from '/lib/port-queue';
-import { PriorityQueue } from '/lib/priority-queue';
-import { killOtherInstances } from '/lib/process';
+} from '/lib/hgw/hacking-formulas';
+import { PortQueue } from '/lib/core/port-queue';
+import { PriorityQueue } from '/lib/core/priority-queue';
+import { killOtherInstances } from '/lib/core/process';
 
 interface RunnerMetadata {
   name: string;

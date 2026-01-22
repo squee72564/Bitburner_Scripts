@@ -1,5 +1,5 @@
 import { AutocompleteData, NS } from '@ns';
-import { ServerDfs } from 'lib/dfs';
+import { ServerDfs } from 'lib/core/dfs';
 import {
   growThreads as formulaGrowThreads,
   hackChance as formulaHackChance,

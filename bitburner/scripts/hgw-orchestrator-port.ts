@@ -1,6 +1,6 @@
 import { AutocompleteData, NS } from '@ns';
-import { ServerBfs } from '/lib/bfs';
-import { isHome, getServerAvailableRam, isServerHackable } from '/lib/host';
+import { ServerBfs } from '/lib/core/bfs';
+import { isHome, getServerAvailableRam, isServerHackable } from '/lib/core/host';
 import {
   scoreTarget,
   ScoringFunction,
@@ -8,9 +8,9 @@ import {
   HGWCompletionPayload,
   getHGWThreadPlan,
   HGWScripts,
-} from '/lib/hgw-helpers';
-import { PortQueue } from '/lib/port-queue';
-import { PriorityQueue } from '/lib/priority-queue';
+} from '/lib/hgw/hgw-helpers';
+import { PortQueue } from '/lib/core/port-queue';
+import { PriorityQueue } from '/lib/core/priority-queue';
 
 interface RunnerMetadata {
   name: string;

@@ -1,8 +1,8 @@
 import { AutocompleteData, NS } from '@ns';
 import { React } from '/ui/react';
 import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
-import { ServerDfs } from 'lib/dfs';
-import { isHome } from 'lib/host';
+import { ServerDfs } from 'lib/core/dfs';
+import { isHome } from 'lib/core/host';
 
 export function autocomplete(data: AutocompleteData): string[] {
   data.flags([

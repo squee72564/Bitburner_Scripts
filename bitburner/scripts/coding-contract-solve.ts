@@ -1,5 +1,5 @@
 import { AutocompleteData, NS } from '@ns';
-import { ServerDfs } from '/lib/dfs';
+import { ServerDfs } from '/lib/core/dfs';
 import { CODING_CONTRACT_ANSWERS } from '/lib/coding-contracts/answers';
 import { CODING_CONTRACT_DESCRIPTIONS } from '/lib/coding-contracts/descriptions';
 

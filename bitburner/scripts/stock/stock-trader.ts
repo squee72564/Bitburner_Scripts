@@ -1,5 +1,5 @@
 import { AutocompleteData, NS } from '@ns';
-import { killOtherInstances } from '/lib/process';
+import { killOtherInstances } from '/lib/core/process';
 import {
   buildTelemetrySnapshot,
   loadTradingState,

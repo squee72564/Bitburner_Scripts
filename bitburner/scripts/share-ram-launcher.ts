@@ -1,6 +1,6 @@
 import { AutocompleteData, NS } from '@ns';
-import { ServerBfs } from '/lib/bfs';
-import { killOtherInstances } from '/lib/process';
+import { ServerBfs } from '/lib/core/bfs';
+import { killOtherInstances } from '/lib/core/process';
 
 const RAM_SCRIPT = 'scripts/share-ram-worker.js';
 const RAM_SCRIPT_ALIASES = new Set<string>([RAM_SCRIPT, `/${RAM_SCRIPT}`]);
