@@ -24,6 +24,7 @@ const SCRIPTS: ScriptData[] = [
       15,
     ],
   },
+  { path: 'scripts/coding-contract-solve.js', args: ['--daemon'] },
 ];
 
 export async function main(ns: NS): Promise<void> {
