@@ -1,6 +1,6 @@
 import { NS } from '@ns';
-import { hackChance, hackPercent, hackTime, growThreads } from '/lib/hacking-formulas';
-import { getServerAvailableRam } from '/lib/host';
+import { hackChance, hackPercent, hackTime, growThreads } from '/lib/hgw/hacking-formulas';
+import { getServerAvailableRam } from '/lib/core/host';
 
 export type HGW_CYCLE_OP = 'hack' | 'grow' | 'weaken';
 
