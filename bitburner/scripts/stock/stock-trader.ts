@@ -128,7 +128,13 @@ export async function main(ns: NS): Promise<void> {
     tick += 1;
 
     const access = ensureAccess(ns, config.access, config.strategy.useForecast, config.dryRun);
-    const marketData = getMarketData(ns, symbols, access.mode, tick, access.hasWSE || access.hasTIX);
+    const marketData = getMarketData(
+      ns,
+      symbols,
+      access.mode,
+      tick,
+      access.hasWSE || access.hasTIX,
+    );
     const marketPrices = mapPrices(marketData);
     const marketMap = mapBySymbol(marketData);
 

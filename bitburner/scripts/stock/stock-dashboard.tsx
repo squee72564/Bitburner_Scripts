@@ -177,13 +177,13 @@ function StockDashboard(props: StockDashboardProps): JSX.Element {
           {error && <div style={styles.error}>{error}</div>}
 
           <div style={styles.statsGrid}>
-          <div style={styles.statCard}>
-            <div style={styles.statLabel}>Tick</div>
-            <div style={styles.statValue}>{tick}</div>
-            <div style={styles.statSub}>
-              Last update: {lastUpdated} · Mode: {snapshot?.mode ?? '—'}
+            <div style={styles.statCard}>
+              <div style={styles.statLabel}>Tick</div>
+              <div style={styles.statValue}>{tick}</div>
+              <div style={styles.statSub}>
+                Last update: {lastUpdated} · Mode: {snapshot?.mode ?? '—'}
+              </div>
             </div>
-          </div>
             <div style={styles.statCard}>
               <div style={styles.statLabel}>Cash</div>
               <div style={styles.statValue}>{cash}</div>

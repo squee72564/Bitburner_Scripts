@@ -10,5 +10,9 @@ export type {
   TelemetrySnapshot,
 } from 'lib/stock/types.js';
 
-export { getDefaultTradingState, loadTradingState, saveTradingState } from 'lib/stock/persistence.js';
+export {
+  getDefaultTradingState,
+  loadTradingState,
+  saveTradingState,
+} from 'lib/stock/persistence.js';
 export { buildTelemetrySnapshot, writeTelemetry } from 'lib/stock/telemetry.js';
