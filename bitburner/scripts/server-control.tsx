@@ -1,5 +1,5 @@
 import { NS } from '@ns';
-import { React, ReactDOM, cheatyDocument } from '/ui/react';
+import { React, ReactDOM } from '/ui/react';
 import { ResizablePanel } from '/ui/components/ResizablePanel';
 import { Button } from '/ui/components/Button';
 import { Input } from '/ui/components/Input';
@@ -8,6 +8,7 @@ import { FloatingPanel } from '/ui/components/FloatingPanel';
 import { ConfirmModal } from '/ui/components/ConfirmModal';
 import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
 import { colors, font, spacing } from '/ui/theme';
+import { cleanup, createOverlay } from '/ui/lib/utils';
 
 type ServerControlProps = {
   ns: NS;
@@ -42,17 +43,10 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
 
-  const overlay = cheatyDocument.createElement('div');
-  overlay.id = 'bb-server-control-overlay';
-  cheatyDocument.body.appendChild(overlay);
+  const overlay = createOverlay('bb-server-control-overlay');
 
   let shouldExit = false;
-  const cleanup = () => {
-    if (!overlay.isConnected) return;
-    ReactDOM.unmountComponentAtNode(overlay);
-    overlay.remove();
-  };
-  ns.atExit(cleanup);
+  ns.atExit(() => cleanup(overlay));
 
   ReactDOM.render(
     <React.StrictMode>
@@ -70,7 +64,7 @@ export async function main(ns: NS): Promise<void> {
   while (!shouldExit) {
     await ns.asleep(250);
   }
-  cleanup();
+  cleanup(overlay);
 }
 
 function ServerControl(props: ServerControlProps): JSX.Element {

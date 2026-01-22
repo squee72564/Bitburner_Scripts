@@ -1,11 +1,12 @@
 import { NS } from '@ns';
-import { React, ReactDOM, cheatyDocument } from '/ui/react';
+import { React, ReactDOM } from '/ui/react';
 import { ServerDfs } from 'lib/core/dfs';
 import { ResizablePanel } from '/ui/components/ResizablePanel';
 import { FloatingPanel } from '/ui/components/FloatingPanel';
 import { Button } from '/ui/components/Button';
 import { Input } from '/ui/components/Input';
 import { colors, font, spacing } from '/ui/theme';
+import { cleanup, createOverlay } from '/ui/lib/utils';
 
 type ConnectControlProps = {
   ns: NS;
@@ -42,21 +43,11 @@ export async function main(ns: NS): Promise<void> {
 
   graphBuilder.traverse();
 
-  const existing = cheatyDocument.getElementById('cc-connect-control-overlay');
-  if (existing) {
-    existing.remove();
-  }
-  const overlay = cheatyDocument.createElement('div');
-  overlay.id = 'cc-connect-control-overlay';
-  cheatyDocument.body.appendChild(overlay);
+  const overlay = createOverlay('cc-connect-control-overlay');
 
   let shouldExit = false;
-  const cleanup = () => {
-    if (!overlay.isConnected) return;
-    ReactDOM.unmountComponentAtNode(overlay);
-    overlay.remove();
-  };
-  ns.atExit(cleanup);
+
+  ns.atExit(() => cleanup(overlay));
 
   ReactDOM.render(
     <React.StrictMode>
@@ -75,7 +66,7 @@ export async function main(ns: NS): Promise<void> {
     await ns.asleep(250);
   }
 
-  cleanup();
+  cleanup(overlay);
 }
 
 function ConnectControl(props: ConnectControlProps): JSX.Element {

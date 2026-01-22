@@ -6,6 +6,7 @@ import { Input } from '/ui/components/Input';
 import { Button } from '/ui/components/Button';
 import { colors, font, spacing } from '/ui/theme';
 import { TelemetrySnapshot } from 'lib/stock/index.js';
+import { cleanup, createOverlay } from '/ui/lib/utils';
 
 type StockDashboardProps = {
   ns: NS;
@@ -37,21 +38,10 @@ export async function main(ns: NS): Promise<void> {
   const telemetryFile = String(flags['telemetry-file'] || 'data/stock-telemetry.json');
   const refreshMs = Math.max(200, Number(flags['refresh-ms']) || 500);
 
-  const existing = cheatyDocument.getElementById('bb-stock-dashboard-overlay');
-  if (existing) {
-    existing.remove();
-  }
-  const overlay = cheatyDocument.createElement('div');
-  overlay.id = 'bb-stock-dashboard-overlay';
-  cheatyDocument.body.appendChild(overlay);
+  const overlay = createOverlay('bb-stock-dashboard-overlay');
 
   let shouldExit = false;
-  const cleanup = () => {
-    if (!overlay.isConnected) return;
-    ReactDOM.unmountComponentAtNode(overlay);
-    overlay.remove();
-  };
-  ns.atExit(cleanup);
+  ns.atExit(() => cleanup(overlay));
 
   ReactDOM.render(
     <React.StrictMode>
@@ -70,7 +60,7 @@ export async function main(ns: NS): Promise<void> {
   while (!shouldExit) {
     await ns.asleep(250);
   }
-  cleanup();
+  cleanup(overlay);
 }
 
 export function autocomplete(data: AutocompleteData): string[] {

@@ -8,7 +8,7 @@ import {
   hackTime,
   weakenTime,
 } from '/lib/hgw/hacking-formulas';
-import { React, ReactDOM, cheatyDocument } from '/ui/react';
+import { React, ReactDOM } from '/ui/react';
 import { ResizablePanel } from '/ui/components/ResizablePanel';
 import { Button } from '/ui/components/Button';
 import { Input } from '/ui/components/Input';
@@ -17,6 +17,7 @@ import { FloatingPanel } from '/ui/components/FloatingPanel';
 import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
 import { colors, font, spacing } from '/ui/theme';
 import { ServerDfs } from '/lib/core/dfs';
+import { cleanup, createOverlay } from '/ui/lib/utils';
 
 type ServerMonitorProps = {
   ns: NS;
@@ -79,17 +80,10 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
 
-  const overlay = cheatyDocument.createElement('div');
-  overlay.id = 'bb-monitor-servers-overlay';
-  cheatyDocument.body.appendChild(overlay);
+  const overlay = createOverlay('bb-monitor-servers-overlay');
 
   let shouldExit = false;
-  const cleanup = () => {
-    if (!overlay.isConnected) return;
-    ReactDOM.unmountComponentAtNode(overlay);
-    overlay.remove();
-  };
-  ns.atExit(cleanup);
+  ns.atExit(() => cleanup(overlay));
 
   ReactDOM.render(
     <React.StrictMode>
@@ -106,7 +100,7 @@ export async function main(ns: NS): Promise<void> {
   while (!shouldExit) {
     await ns.asleep(250);
   }
-  cleanup();
+  cleanup(overlay);
 }
 
 function ServerMonitor(props: ServerMonitorProps): JSX.Element {
