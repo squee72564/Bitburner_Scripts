@@ -1,4 +1,5 @@
 import { AutocompleteData, NS } from '@ns';
+import { killOtherInstances } from '/lib/process';
 import {
   buildTelemetrySnapshot,
   loadTradingState,
@@ -232,17 +233,6 @@ export async function main(ns: NS): Promise<void> {
 export function autocomplete(data: AutocompleteData): string[] {
   data.flags(FLAG_SCHEMA);
   return [];
-}
-
-function killOtherInstances(ns: NS): void {
-  const host = ns.getHostname();
-  const script = ns.getScriptName();
-  const currentPid = ns.getRunningScript()?.pid;
-  for (const proc of ns.ps(host)) {
-    if (proc.filename === script && proc.pid !== currentPid) {
-      ns.kill(proc.pid);
-    }
-  }
 }
 
 function ensureAccess(

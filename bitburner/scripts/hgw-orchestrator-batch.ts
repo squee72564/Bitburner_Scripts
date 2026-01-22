@@ -21,6 +21,7 @@ import {
 } from '/lib/hacking-formulas';
 import { PortQueue } from '/lib/port-queue';
 import { PriorityQueue } from '/lib/priority-queue';
+import { killOtherInstances } from '/lib/process';
 
 interface RunnerMetadata {
   name: string;
@@ -404,17 +405,6 @@ export async function main(ns: NS): Promise<void> {
     }
 
     await ns.sleep(1000);
-  }
-}
-
-function killOtherInstances(ns: NS): void {
-  const host = ns.getHostname();
-  const script = ns.getScriptName();
-  const currentPid = ns.getRunningScript()?.pid;
-  for (const proc of ns.ps(host)) {
-    if (proc.filename === script && proc.pid !== currentPid) {
-      ns.kill(proc.pid);
-    }
   }
 }
 

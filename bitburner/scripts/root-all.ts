@@ -3,6 +3,7 @@ import { React } from '/ui/react';
 import { ExpandableList, ExpandableItem } from '/ui/components/ExpandableList';
 import { ServerDfs } from 'lib/dfs';
 import { isHome } from 'lib/host';
+import { killOtherInstances } from '/lib/process';
 
 const PORT_OPENERS: Array<{
   file: string;
@@ -18,6 +19,7 @@ const PORT_OPENERS: Array<{
 export async function main(ns: NS): Promise<void> {
   ns.disableLog('scan');
   ns.disableLog('sleep');
+  killOtherInstances(ns);
 
   const flags = ns.flags([
     ['help', false],

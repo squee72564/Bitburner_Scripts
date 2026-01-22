@@ -1,5 +1,6 @@
 import { AutocompleteData, NS } from '@ns';
 import { ServerBfs } from '/lib/bfs';
+import { killOtherInstances } from '/lib/process';
 
 const RAM_SCRIPT = 'scripts/share-ram-worker.js';
 const RAM_SCRIPT_ALIASES = new Set<string>([RAM_SCRIPT, `/${RAM_SCRIPT}`]);
@@ -80,17 +81,6 @@ export async function main(ns: NS): Promise<void> {
       await rebalanceHost(ns, host, opts);
     }
     await ns.sleep(opts.interval);
-  }
-}
-
-function killOtherInstances(ns: NS): void {
-  const host = ns.getHostname();
-  const script = ns.getScriptName();
-  const currentPid = ns.getRunningScript()?.pid;
-  for (const proc of ns.ps(host)) {
-    if (proc.filename === script && proc.pid !== currentPid) {
-      ns.kill(proc.pid);
-    }
   }
 }
 

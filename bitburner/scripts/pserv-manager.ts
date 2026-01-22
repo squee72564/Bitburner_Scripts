@@ -1,4 +1,5 @@
 import { AutocompleteData, NS } from '@ns';
+import { killOtherInstances } from '/lib/process';
 
 const FLAG_SCHEMA: [string, string | number | boolean][] = [
   ['interval', 5000],
@@ -144,17 +145,6 @@ export async function main(ns: NS): Promise<void> {
     }
 
     await ns.sleep(interval);
-  }
-}
-
-function killOtherInstances(ns: NS): void {
-  const host = ns.getHostname();
-  const script = ns.getScriptName();
-  const currentPid = ns.getRunningScript()?.pid;
-  for (const proc of ns.ps(host)) {
-    if (proc.filename === script && proc.pid !== currentPid) {
-      ns.kill(proc.pid);
-    }
   }
 }
 
