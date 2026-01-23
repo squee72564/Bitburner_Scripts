@@ -1,6 +1,8 @@
 import { React, cheatyDocument } from '/ui/react';
 import { colors, font, spacing } from '/ui/theme';
 import { CloseButton } from '/ui/components/CloseButton';
+import { cn } from '../lib/cn';
+import { optional } from 'zod';
 
 type ResizablePanelProps = {
   title: string;
@@ -10,6 +12,7 @@ type ResizablePanelProps = {
   minHeight?: number;
   defaultWidth?: number;
   defaultHeight?: number;
+  className?: string;
 };
 
 export function ResizablePanel(props: ResizablePanelProps): JSX.Element {
@@ -64,6 +67,11 @@ export function ResizablePanel(props: ResizablePanelProps): JSX.Element {
 
   return (
     <div
+      className={cn(
+        'relative flex flex-col',
+        'overflow-hidden',
+        props.className,
+      )}
       style={{
         ...styles.container,
         width: size.w,
