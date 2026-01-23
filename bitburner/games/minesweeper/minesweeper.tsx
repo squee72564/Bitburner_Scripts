@@ -1,0 +1,172 @@
+import { NS, AutocompleteData } from "@ns";
+import { cleanup, createOverlay, injectTailwindStyles } from "/ui/lib/utils";
+import { ReactDOM, React } from "/ui/react";
+import { FloatingPanel } from "/ui/components/FloatingPanel";
+import { ResizablePanel } from "/ui/components/ResizablePanel";
+import { Board, initializeBoard, randomizeBoard } from "games/minesweeper/board";
+import { TileState, TileType, TileUI } from "./tile";
+
+type MinesweeperProps = {
+  ns: NS;
+  onExit: () => void;
+  width: number;
+  height: number;
+  difficulty: number;
+};
+
+interface MinesweeperOptions {
+  width: number;
+  height: number;
+  difficulty: number;
+};
+
+const DEFAULT_FLAGS: [string, string | number | boolean | string[]][] = [
+  ['help', false],
+  ['h', false],
+  ['width', 8],
+  ['height', 8],
+  ['difficulty', 0.1],
+] as const;
+
+export function autocomplete(data: AutocompleteData) {
+  data.flags(DEFAULT_FLAGS);
+  return [];
+}
+
+function printHelp(ns: NS) {
+  ns.tprint(`Usage: ${ns.getScriptName()} ${DEFAULT_FLAGS.map((flag) => '[--' + flag[0] + ']').join(' ')}`);
+}
+
+function parseArguments(ns: NS): MinesweeperOptions | null {
+  const flags = ns.flags(DEFAULT_FLAGS);
+
+  if (flags.help || flags.h) {
+    printHelp(ns);
+    return null;
+  }
+
+  const width = Math.max(0, Number(flags.width));
+  const height = Math.max(0, Number(flags.height));
+  const difficulty = Math.min(1, Math.max(0, Number(flags.difficulty)));
+
+  if (![width, height, difficulty].every(Number.isFinite)) {
+    ns.tprint("Invalid arguments!");
+    printHelp(ns);
+    return null;
+  }
+
+  return {
+    width,
+    height,
+    difficulty
+  };
+}
+
+export async function main(ns: NS): Promise<void> {
+
+  const opts = parseArguments(ns);
+
+  if (!opts) {
+    return;
+  }
+
+  const overlay = createOverlay('bb-minesweeper-overlay');
+  injectTailwindStyles(ns);
+  ns.atExit(() => cleanup(overlay));
+  let shouldExit = false;
+
+  ReactDOM.render(
+    <React.StrictMode>
+      <Minesweeper
+        ns={ns}
+        onExit={() => {shouldExit = true;}}
+        width={opts.width}
+        height={opts.height}
+        difficulty={opts.difficulty}
+      >
+      </Minesweeper>
+    </React.StrictMode>,
+    overlay
+  );
+
+  while (!shouldExit) {
+    await ns.asleep(250);
+  }
+
+  cleanup(overlay);
+}
+
+function Minesweeper(props: MinesweeperProps): JSX.Element {
+  const [board, setBoard] = React.useState<Board>(() => {
+    const board = initializeBoard(props.width, props.height);
+    randomizeBoard(board, props.difficulty);
+    return board;
+  });
+
+  React.useEffect(() => {
+    const b = initializeBoard(props.width, props.height)
+    randomizeBoard(b, props.difficulty)
+    setBoard(b)
+  }, [props.width, props.height, props.difficulty])
+
+  const handleReveal = (x: number, y: number) => {
+    const tile = board[y][x];
+
+    if (tile.state === TileState.FLAGGED)
+      return;
+
+    if (tile.type === TileType.BOMB) {
+      // We die here 
+      return;
+    }
+
+    // dfs reveal from position and new board
+    //setBoard((prev) => revealTiles(prev, x, y));
+  };
+
+  const handleToggleFlag = (x: number,  y: number) => {
+    const newBoard = board.map(row => row.map(tile => ({ ...tile })));
+    const tile = newBoard[y][x];
+
+    if (tile.state === TileState.OPENED) {
+      return;
+    }
+
+    if (tile.state === TileState.FLAGGED) {
+      tile.state = TileState.HIDDEN;
+    } else {
+      tile.state = TileState.FLAGGED;
+    }
+
+    setBoard(newBoard);
+  };
+
+  return (
+    <FloatingPanel className="p-0">
+      <ResizablePanel 
+        className="p-0"
+        title="Minesweeper"
+        onClose={props.onExit}
+        defaultWidth={420}
+        defaultHeight={320}
+      >
+        <div
+          className="grid gap-1 w-full h-full"
+          style={{ gridTemplateColumns: `repeat(${props.width}, 1fr)` }}
+        >
+          {board.flat().map((tile) => (
+            <TileUI
+              key={`${tile.x}-${tile.y}`}
+              tile={tile}
+              x={tile.x}
+              y={tile.y}
+              onReveal={handleReveal}
+              onToggleFlag={handleToggleFlag}
+            />
+          ))}
+        </div>
+      </ResizablePanel>
+    </FloatingPanel>
+  );
+
+}
