@@ -1,10 +1,10 @@
-import React from "/lib/react";
+import React from '/lib/react';
 
 export enum TileState {
   HIDDEN,
   OPENED,
   FLAGGED,
-};
+}
 
 export enum TileType {
   ZERO = 0,
@@ -16,8 +16,8 @@ export enum TileType {
   SIX = 6,
   SEVEN = 7,
   EIGHT = 8,
-  BOMB = "B"
-};
+  BOMB = 'B',
+}
 
 export type Tile = {
   state: TileState;
@@ -26,16 +26,14 @@ export type Tile = {
   y: number;
 };
 
-
 export function makeTile(x: number, y: number): Tile {
   return {
     state: TileState.HIDDEN,
     type: TileType.ZERO,
     x,
-    y
+    y,
   };
 }
-
 
 export function TileUI({
   tile,
@@ -44,19 +42,19 @@ export function TileUI({
   onReveal,
   onToggleFlag,
 }: {
-  tile: Tile,
-  x: number,
-  y: number,
-  onReveal: (x: number, y: number) => void,
-  onToggleFlag: (x: number, y: number) => void,
-})  {
+  tile: Tile;
+  x: number;
+  y: number;
+  onReveal: (x: number, y: number) => void;
+  onToggleFlag: (x: number, y: number) => void;
+}) {
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (e.button === 0) {
-      onReveal(x,y);
+      onReveal(x, y);
     } else if (e.button === 2) {
-      onToggleFlag(x,y);
+      onToggleFlag(x, y);
     }
   };
 
@@ -96,19 +94,17 @@ export function TileUI({
       onMouseDown={handleMouseDown}
       onContextMenu={(e) => e.preventDefault()}
       className={[
-        "flex items-center justify-center select-none font-semibold text-sm leading-none w-full h-full",
+        'flex items-center justify-center select-none font-semibold text-sm leading-none w-full h-full',
         isOpened
-          ? "bg-slate-500 border border-slate-600 shadow-inner text-slate-50"
-          : "bg-slate-300 border border-slate-500 shadow-[inset_1px_1px_0_#ffffff,inset_-1px_-1px_0_#9ca3af]",
-        isBomb && isOpened ? "bg-rose-200 text-rose-800" : "",
-        isFlagged ? "text-rose-700" : "",
+          ? 'bg-slate-500 border border-slate-600 shadow-inner text-slate-50'
+          : 'bg-slate-300 border border-slate-500 shadow-[inset_1px_1px_0_#ffffff,inset_-1px_-1px_0_#9ca3af]',
+        isBomb && isOpened ? 'bg-rose-200 text-rose-800' : '',
+        isFlagged ? 'text-rose-700' : '',
         numberClass,
-      ].join(" ")}
+      ].join(' ')}
       style={{ width: '100%' }}
     >
-      <span className="block text-center">
-        {tile.state === TileState.HIDDEN ? '' : display}
-      </span>
+      <span className="block text-center">{tile.state === TileState.HIDDEN ? '' : display}</span>
     </div>
   );
 }

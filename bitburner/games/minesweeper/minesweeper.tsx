@@ -1,10 +1,10 @@
-import { NS, AutocompleteData } from "@ns";
-import { cleanup, createOverlay, injectTailwindStyles } from "/ui/lib/utils";
-import { ReactDOM, React } from "/ui/react";
-import { FloatingPanel } from "/ui/components/FloatingPanel";
-import { ResizablePanel } from "/ui/components/ResizablePanel";
-import { Board, initializeBoard, randomizeBoard } from "games/minesweeper/board";
-import { TileState, TileType, TileUI } from "./tile";
+import { NS, AutocompleteData } from '@ns';
+import { cleanup, createOverlay, injectTailwindStyles } from '/ui/lib/utils';
+import { ReactDOM, React } from '/ui/react';
+import { FloatingPanel } from '/ui/components/FloatingPanel';
+import { ResizablePanel } from '/ui/components/ResizablePanel';
+import { Board, initializeBoard, randomizeBoard } from 'games/minesweeper/board';
+import { TileState, TileType, TileUI } from './tile';
 
 type MinesweeperProps = {
   ns: NS;
@@ -18,7 +18,7 @@ interface MinesweeperOptions {
   width: number;
   height: number;
   difficulty: number;
-};
+}
 
 const DEFAULT_FLAGS: [string, string | number | boolean | string[]][] = [
   ['help', false],
@@ -34,7 +34,9 @@ export function autocomplete(data: AutocompleteData) {
 }
 
 function printHelp(ns: NS) {
-  ns.tprint(`Usage: ${ns.getScriptName()} ${DEFAULT_FLAGS.map((flag) => '[--' + flag[0] + ']').join(' ')}`);
+  ns.tprint(
+    `Usage: ${ns.getScriptName()} ${DEFAULT_FLAGS.map((flag) => '[--' + flag[0] + ']').join(' ')}`,
+  );
 }
 
 function parseArguments(ns: NS): MinesweeperOptions | null {
@@ -50,7 +52,7 @@ function parseArguments(ns: NS): MinesweeperOptions | null {
   const difficulty = Math.min(1, Math.max(0, Number(flags.difficulty)));
 
   if (![width, height, difficulty].every(Number.isFinite)) {
-    ns.tprint("Invalid arguments!");
+    ns.tprint('Invalid arguments!');
     printHelp(ns);
     return null;
   }
@@ -58,12 +60,11 @@ function parseArguments(ns: NS): MinesweeperOptions | null {
   return {
     width,
     height,
-    difficulty
+    difficulty,
   };
 }
 
 export async function main(ns: NS): Promise<void> {
-
   const opts = parseArguments(ns);
 
   if (!opts) {
@@ -79,14 +80,15 @@ export async function main(ns: NS): Promise<void> {
     <React.StrictMode>
       <Minesweeper
         ns={ns}
-        onExit={() => {shouldExit = true;}}
+        onExit={() => {
+          shouldExit = true;
+        }}
         width={opts.width}
         height={opts.height}
         difficulty={opts.difficulty}
-      >
-      </Minesweeper>
+      ></Minesweeper>
     </React.StrictMode>,
-    overlay
+    overlay,
   );
 
   while (!shouldExit) {
@@ -104,10 +106,10 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
   });
 
   React.useEffect(() => {
-    const b = initializeBoard(props.width, props.height)
-    randomizeBoard(b, props.difficulty)
-    setBoard(b)
-  }, [props.width, props.height, props.difficulty])
+    const b = initializeBoard(props.width, props.height);
+    randomizeBoard(b, props.difficulty);
+    setBoard(b);
+  }, [props.width, props.height, props.difficulty]);
 
   const deltas = [-1, 0, 1, 0, -1, 1, 1, -1, -1];
 
@@ -146,16 +148,16 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
     }
   };
 
-  const revealTiles = (board: Board, x: number, y: number): Board  => {
-    const newBoard = board.map(row => row.map(tile => ({ ...tile })));
+  const revealTiles = (board: Board, x: number, y: number): Board => {
+    const newBoard = board.map((row) => row.map((tile) => ({ ...tile })));
     revealFrom(newBoard, x, y);
     return newBoard;
-  }
+  };
 
   const handleReveal = (x: number, y: number) => {
     const tile = board[y][x];
 
-    if (tile.state === TileState.OPENED && typeof tile.type === "number" && tile.type > 0) {
+    if (tile.state === TileState.OPENED && typeof tile.type === 'number' && tile.type > 0) {
       const width = board[0].length;
       const height = board.length;
       let flagCount = 0;
@@ -170,7 +172,7 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
       }
 
       if (flagCount === tile.type) {
-        const newBoard = board.map(row => row.map(tile => ({ ...tile })));
+        const newBoard = board.map((row) => row.map((tile) => ({ ...tile })));
         for (let i = 0; i < 8; i++) {
           const nx = x + deltas[i];
           const ny = y + deltas[i + 1];
@@ -183,11 +185,10 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
       return;
     }
 
-    if (tile.state === TileState.FLAGGED)
-      return;
+    if (tile.state === TileState.FLAGGED) return;
 
     if (tile.type === TileType.BOMB) {
-      // We die here 
+      // We die here
       return;
     }
 
@@ -195,8 +196,8 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
     setBoard((prev) => revealTiles(prev, x, y));
   };
 
-  const handleToggleFlag = (x: number,  y: number) => {
-    const newBoard = board.map(row => row.map(tile => ({ ...tile })));
+  const handleToggleFlag = (x: number, y: number) => {
+    const newBoard = board.map((row) => row.map((tile) => ({ ...tile })));
     const tile = newBoard[y][x];
 
     if (tile.state === TileState.OPENED) {
@@ -213,17 +214,17 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
   };
 
   const mineCount = React.useMemo(
-    () => board.flat().filter(tile => tile.type === TileType.BOMB).length,
-    [board]
+    () => board.flat().filter((tile) => tile.type === TileType.BOMB).length,
+    [board],
   );
   const flagCount = React.useMemo(
-    () => board.flat().filter(tile => tile.state === TileState.FLAGGED).length,
-    [board]
+    () => board.flat().filter((tile) => tile.state === TileState.FLAGGED).length,
+    [board],
   );
 
   return (
     <FloatingPanel className="p-0">
-      <ResizablePanel 
+      <ResizablePanel
         className="p-0 bg-slate-200"
         title="Minesweeper"
         onClose={props.onExit}
@@ -234,7 +235,9 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
           <div className="flex items-center justify-between px-3 py-2 rounded-md bg-blue-100 border border-slate-400 shadow-inner text-slate-700 font-semibold text-sm">
             <div className="tracking-wide">MINES: {mineCount}</div>
             <div className="tracking-wide">FLAGS: {flagCount}</div>
-            <div className="tracking-wide">SIZE: {props.width}×{props.height}</div>
+            <div className="tracking-wide">
+              SIZE: {props.width}×{props.height}
+            </div>
           </div>
           <div
             className="grid gap-1 w-full h-full p-2 rounded-md bg-slate-400 border border-slate-600 shadow-[inset_2px_2px_0_#f1f5f9,inset_-2px_-2px_0_#64748b]"
@@ -258,5 +261,4 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
       </ResizablePanel>
     </FloatingPanel>
   );
-
 }

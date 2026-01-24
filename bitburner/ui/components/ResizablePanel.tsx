@@ -67,11 +67,7 @@ export function ResizablePanel(props: ResizablePanelProps): JSX.Element {
 
   return (
     <div
-      className={cn(
-        'relative flex flex-col',
-        'overflow-hidden',
-        props.className,
-      )}
+      className={cn('relative flex flex-col', 'overflow-hidden', props.className)}
       style={{
         ...styles.container,
         width: size.w,

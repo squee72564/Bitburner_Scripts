@@ -1,4 +1,4 @@
-import { comprLZDecode, comprLZEncode } from "../answers/Compression";
+import { comprLZDecode, comprLZEncode } from '../answers/Compression';
 
 /* eslint-disable */
 // @ts-nocheck

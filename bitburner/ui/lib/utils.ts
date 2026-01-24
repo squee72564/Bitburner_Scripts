@@ -1,11 +1,11 @@
 import { NS } from '@ns';
 import { ReactDOM, cheatyDocument } from '/ui/react';
 
- export function cleanup(overlay: HTMLDivElement) {
+export function cleanup(overlay: HTMLDivElement) {
   if (!overlay.isConnected) return;
   ReactDOM.unmountComponentAtNode(overlay);
   overlay.remove();
-};
+}
 
 export function createOverlay(id: string): HTMLDivElement {
   const existing = cheatyDocument.getElementById(id);
@@ -19,10 +19,7 @@ export function createOverlay(id: string): HTMLDivElement {
   return overlay;
 }
 
-export function injectTailwindStyles(
-  ns: NS,
-  options?: { id?: string; path?: string },
-): void {
+export function injectTailwindStyles(ns: NS, options?: { id?: string; path?: string }): void {
   const id = options?.id ?? 'bb-tailwind-styles';
   const path = options?.path ?? 'ui/tailwind.generated.txt';
   if (cheatyDocument.getElementById(id)) return;
