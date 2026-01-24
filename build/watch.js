@@ -52,7 +52,11 @@ async function initTypeScript() {
     const relative = path.relative(dist, distFile);
     const srcFile = path.resolve(src, relative);
     // if srcFile does not exist, delete distFile
-    if (!fs.existsSync(srcFile) && !fs.existsSync(srcFile.replace(/\.js$/, '.ts'))) {
+    if (
+      !fs.existsSync(srcFile) &&
+      !fs.existsSync(srcFile.replace(/\.js$/, '.ts')) &&
+      !fs.existsSync(srcFile.replace(/\.js$/, '.tsx'))
+    ) {
       await fs.promises.unlink(distFile);
       console.log(`${normalize(relative)} deleted`);
     }
@@ -64,9 +68,9 @@ async function initTypeScript() {
  * Watch phase only.
  */
 async function watchTypeScript() {
-  chokidar.watch(`${src}/**/*.ts`).on('unlink', async (p) => {
-    // called when *.ts file is deleted
-    const relative = path.relative(src, p).replace(/\.ts$/, '.js');
+  chokidar.watch([`${src}/**/*.ts`, `${src}/**/*.tsx`]).on('unlink', async (p) => {
+    // called when *.ts or *.tsx file is deleted
+    const relative = path.relative(src, p).replace(/\.tsx?$/, '.js');
     const distFile = path.resolve(dist, relative);
     // if distFile exists, delete it
     if (fs.existsSync(distFile)) {
