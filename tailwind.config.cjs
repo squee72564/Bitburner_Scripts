@@ -1,6 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./bitburner/scripts/**/*.{ts,tsx}', './bitburner/ui/**/*.{ts,tsx}'],
+  content: [
+    './bitburner/scripts/**/*.{ts,tsx}',
+    './bitburner/ui/**/*.{ts,tsx}',
+    './bitburner/games/**/*.{ts,tsx}',
+  ],
   corePlugins: {
     preflight: false,
   },
