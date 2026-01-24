@@ -212,29 +212,48 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
     setBoard(newBoard);
   };
 
+  const mineCount = React.useMemo(
+    () => board.flat().filter(tile => tile.type === TileType.BOMB).length,
+    [board]
+  );
+  const flagCount = React.useMemo(
+    () => board.flat().filter(tile => tile.state === TileState.FLAGGED).length,
+    [board]
+  );
+
   return (
     <FloatingPanel className="p-0">
       <ResizablePanel 
-        className="p-0"
+        className="p-0 bg-slate-200"
         title="Minesweeper"
         onClose={props.onExit}
-        defaultWidth={420}
-        defaultHeight={320}
+        defaultWidth={460}
+        defaultHeight={360}
       >
-        <div
-          className="grid gap-1 w-full h-full"
-          style={{ gridTemplateColumns: `repeat(${props.width}, 1fr)` }}
-        >
-          {board.flat().map((tile) => (
-            <TileUI
-              key={`${tile.x}-${tile.y}`}
-              tile={tile}
-              x={tile.x}
-              y={tile.y}
-              onReveal={handleReveal}
-              onToggleFlag={handleToggleFlag}
-            />
-          ))}
+        <div className="flex flex-col h-full w-full p-3 gap-3 bg-gradient-to-b from-slate-200 to-slate-300">
+          <div className="flex items-center justify-between px-3 py-2 rounded-md bg-blue-100 border border-slate-400 shadow-inner text-slate-700 font-semibold text-sm">
+            <div className="tracking-wide">MINES: {mineCount}</div>
+            <div className="tracking-wide">FLAGS: {flagCount}</div>
+            <div className="tracking-wide">SIZE: {props.width}×{props.height}</div>
+          </div>
+          <div
+            className="grid gap-1 w-full h-full p-2 rounded-md bg-slate-400 border border-slate-600 shadow-[inset_2px_2px_0_#f1f5f9,inset_-2px_-2px_0_#64748b]"
+            style={{
+              gridTemplateColumns: `repeat(${props.width}, 1fr)`,
+              gridTemplateRows: `repeat(${props.height}, 1fr)`,
+            }}
+          >
+            {board.flat().map((tile) => (
+              <TileUI
+                key={`${tile.x}-${tile.y}`}
+                tile={tile}
+                x={tile.x}
+                y={tile.y}
+                onReveal={handleReveal}
+                onToggleFlag={handleToggleFlag}
+              />
+            ))}
+          </div>
         </div>
       </ResizablePanel>
     </FloatingPanel>

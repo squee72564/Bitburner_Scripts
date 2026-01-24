@@ -60,20 +60,55 @@ export function TileUI({
     }
   };
 
+  const numberColor = [
+    'text-sky-700',
+    'text-emerald-700',
+    'text-rose-700',
+    'text-indigo-700',
+    'text-amber-700',
+    'text-teal-700',
+    'text-fuchsia-700',
+    'text-slate-700',
+  ];
+
+  const isOpened = tile.state === TileState.OPENED;
+  const isFlagged = tile.state === TileState.FLAGGED;
+  const isBomb = tile.type === TileType.BOMB;
+
+  let display = '';
+  if (isFlagged) {
+    display = 'F';
+  } else if (isOpened) {
+    if (isBomb) {
+      display = 'B';
+    } else if (tile.type !== TileType.ZERO) {
+      display = tile.type.toString();
+    }
+  }
+
+  let numberClass = '';
+  if (isOpened && !isBomb && typeof tile.type === 'number' && tile.type > 0) {
+    numberClass = numberColor[tile.type - 1] ?? 'text-slate-700';
+  }
+
   return (
     <div
       onMouseDown={handleMouseDown}
       onContextMenu={(e) => e.preventDefault()}
-      className="flex items-center justify-center border border-slate-500 select-none"
-      style={{  width: '100%' }}
+      className={[
+        "flex items-center justify-center select-none font-semibold text-sm leading-none w-full h-full",
+        isOpened
+          ? "bg-slate-500 border border-slate-600 shadow-inner text-slate-50"
+          : "bg-slate-300 border border-slate-500 shadow-[inset_1px_1px_0_#ffffff,inset_-1px_-1px_0_#9ca3af]",
+        isBomb && isOpened ? "bg-rose-200 text-rose-800" : "",
+        isFlagged ? "text-rose-700" : "",
+        numberClass,
+      ].join(" ")}
+      style={{ width: '100%' }}
     >
-      {tile.state === TileState.HIDDEN ? (
-        ' '
-      ) : tile.state === TileState.OPENED ? (
-        tile.state
-      ) : (
-        'F'
-      )}
+      <span className="block text-center">
+        {tile.state === TileState.HIDDEN ? '' : display}
+      </span>
     </div>
   );
 }
