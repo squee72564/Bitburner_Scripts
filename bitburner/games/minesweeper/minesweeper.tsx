@@ -109,8 +109,79 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
     setBoard(b)
   }, [props.width, props.height, props.difficulty])
 
+  const deltas = [-1, 0, 1, 0, -1, 1, 1, -1, -1];
+
+  const revealFrom = (board: Board, x: number, y: number) => {
+    const width = board[0].length;
+    const height = board.length;
+    const stack: Array<[number, number]> = [[x, y]];
+    const visited = new Set<string>();
+
+    while (stack.length > 0) {
+      const [cx, cy] = stack.pop()!;
+      const key = `${cx},${cy}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
+
+      if (cx < 0 || cx >= width || cy < 0 || cy >= height) {
+        continue;
+      }
+
+      const tile = board[cy][cx];
+      if (tile.state === TileState.FLAGGED || tile.type === TileType.BOMB) {
+        continue;
+      }
+
+      tile.state = TileState.OPENED;
+
+      if (tile.type !== TileType.ZERO) {
+        continue;
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const nx = cx + deltas[i];
+        const ny = cy + deltas[i + 1];
+        stack.push([nx, ny]);
+      }
+    }
+  };
+
+  const revealTiles = (board: Board, x: number, y: number): Board  => {
+    const newBoard = board.map(row => row.map(tile => ({ ...tile })));
+    revealFrom(newBoard, x, y);
+    return newBoard;
+  }
+
   const handleReveal = (x: number, y: number) => {
     const tile = board[y][x];
+
+    if (tile.state === TileState.OPENED && typeof tile.type === "number" && tile.type > 0) {
+      const width = board[0].length;
+      const height = board.length;
+      let flagCount = 0;
+
+      for (let i = 0; i < 8; i++) {
+        const nx = x + deltas[i];
+        const ny = y + deltas[i + 1];
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+        if (board[ny][nx].state === TileState.FLAGGED) {
+          flagCount++;
+        }
+      }
+
+      if (flagCount === tile.type) {
+        const newBoard = board.map(row => row.map(tile => ({ ...tile })));
+        for (let i = 0; i < 8; i++) {
+          const nx = x + deltas[i];
+          const ny = y + deltas[i + 1];
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          if (newBoard[ny][nx].state === TileState.FLAGGED) continue;
+          revealFrom(newBoard, nx, ny);
+        }
+        setBoard(newBoard);
+      }
+      return;
+    }
 
     if (tile.state === TileState.FLAGGED)
       return;
@@ -121,7 +192,7 @@ function Minesweeper(props: MinesweeperProps): JSX.Element {
     }
 
     // dfs reveal from position and new board
-    //setBoard((prev) => revealTiles(prev, x, y));
+    setBoard((prev) => revealTiles(prev, x, y));
   };
 
   const handleToggleFlag = (x: number,  y: number) => {
