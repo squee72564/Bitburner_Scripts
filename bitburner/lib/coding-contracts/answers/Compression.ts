@@ -1,4 +1,4 @@
-function comprLZEncode(plain: string): string {
+export function comprLZEncode(plain: string): string {
   let curState: (string | null)[][] = Array.from({ length: 10 }, () => Array(10).fill(null));
   let newState: (string | null)[][] = Array.from({ length: 10 }, () => Array(10).fill(null));
 
@@ -79,7 +79,7 @@ function comprLZEncode(plain: string): string {
   return result ?? '';
 }
 
-function comprLZDecode(compr: string): string | null {
+export function comprLZDecode(compr: string): string | null {
   let plain = '';
   for (let i = 0; i < compr.length; ) {
     const literalLength = compr.charCodeAt(i) - 0x30;

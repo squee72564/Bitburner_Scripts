@@ -1,3 +1,5 @@
+import { comprLZDecode, comprLZEncode } from "../answers/Compression";
+
 /* eslint-disable */
 // @ts-nocheck
 export type CodingContractDescription = {
